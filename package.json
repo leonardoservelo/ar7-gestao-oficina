@@ -1,16 +1,19 @@
 {
   "name": "ar7-gestao-oficina",
-  "version": "19.0.0",
+  "version": "20.1.0",
   "private": true,
-  "description": "Gestão de oficina, cotações, propostas comerciais, aprovações e relatórios técnicos da AR7 Elétrica.",
+  "description": "Gestão de oficina AR7 com sincronização central PostgreSQL para múltiplos dispositivos.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js 8108 --open --auto-port",
     "check": "node --check app.js && node --check server.js",
-    "test": "node tests/smoke-v19.js"
+    "test": "node tests/smoke-v20.js"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
   }
 }

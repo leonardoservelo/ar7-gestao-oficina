@@ -1,4 +1,4 @@
-/* Desativado no MVP v19 para impedir que versões antigas fiquem presas no cache. */
+/* Desativado no MVP v20 para impedir que versões antigas fiquem presas no cache. */
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil((async()=>{
   const keys = await caches.keys();

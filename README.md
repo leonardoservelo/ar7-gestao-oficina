@@ -1,28 +1,37 @@
-# AR7 Gestão da Oficina V19
+# AR7 Gestão da Oficina V20.1.1
 
-MVP web para gestão do fluxo completo da oficina: recebimento, diagnóstico, cotação, orçamento, aprovação do cliente, compras, montagem, testes, relatório técnico e conclusão.
+Versão multi-dispositivo com banco central PostgreSQL.
 
-## Destaques da V19
+## O que mudou
 
-- Dashboard executivo redesenhado com indicadores e gráficos baseados nos dados reais da aplicação;
-- visual responsivo para desktop, tablet e smartphone;
-- fila operacional com navegação por toque e scroll horizontal controlado;
-- reset único das Ordens de Serviço para iniciar os testes do zero, preservando empresas e equipamentos;
-- Portal do Cliente com propostas comerciais, aprovação, solicitação de ajuste e negativa com motivo;
-- relatório técnico separado da proposta comercial;
-- inicializador local com troca automática de porta quando 8108 estiver ocupada;
-- estrutura pronta para GitHub e Railway.
+- Dados centrais compartilhados entre PC, tablet e celular.
+- Login do servidor por cookie HttpOnly.
+- Sincronização automática a cada 5 segundos e após cada salvamento.
+- Cache local mantido para tolerar quedas temporárias de conexão.
+- API `/api/state` protegida por autenticação.
+- PostgreSQL configurado por `DATABASE_URL`.
+- Healthcheck informa se o banco está conectado.
 
-## Abrir no Windows
+## Variáveis obrigatórias no servidor
 
-Extraia o ZIP e execute `INICIAR.bat`.
+- `DATABASE_URL`
+- `APP_SECRET`
+- `AR7_ADMIN_USER`
+- `AR7_ADMIN_PASSWORD`
 
-O servidor tenta a porta 8108. Se ela estiver ocupada, tenta automaticamente 8109, 8110 e assim por diante até encontrar uma porta livre.
+## Observação sobre a arquitetura V20
 
-## GitHub + Railway
+A V20 usa um registro JSONB central para preservar toda a estrutura atual da aplicação sem reescrever o fluxo da oficina. É uma migração segura para sincronização multi-dispositivo. Em uma etapa futura, módulos com alta concorrência e fotos podem ser normalizados em tabelas próprias e storage de arquivos.
 
-Leia `README-GITHUB-RAILWAY.md`.
+## Desenvolvimento local
 
-## Persistência dos dados
+Sem `DATABASE_URL`, o servidor continua abrindo em modo local para manutenção do código. Em produção, configure as variáveis acima.
 
-Esta versão ainda usa `localStorage` do navegador. O deploy no Railway hospeda a aplicação, mas não cria um banco de dados compartilhado. Cada navegador/dispositivo mantém seus próprios dados até a migração futura para backend + PostgreSQL.
+
+## Fotos no tablet/celular — V20.1
+
+- Botões separados **Câmera** e **Galeria** nas evidências técnicas.
+- A galeria não usa `capture`, evitando que tablets forcem a abertura da câmera.
+- Fotos de câmera acima de 4 MB são aceitas e compactadas automaticamente.
+- Originais de até 35 MB são processados; a cópia salva é redimensionada para até 1600 px e alvo aproximado de 420 KB.
+- Mesmo se o cache `localStorage` do aparelho lotar, a V20.1 continua tentando gravar no banco central autenticado.

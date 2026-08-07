@@ -2,7 +2,7 @@
   'use strict';
 
   const DB_KEY = 'ar7-oficina-db-v2';
-  const APP_VERSION = 19;
+  const APP_VERSION = 20;
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -600,7 +600,7 @@
     db.orders.unshift(order);addActivity(`OS ${order.number} gerada automaticamente para ${client.name} e disponibilizada à Recepção.`);saveDB();newOrderDraft=null;closeModal();location.hash=`#order/${order.id}`;toast(`OS ${order.number} criada para ${equipmentDescription(eq)}.`);
   }
 
-  async function submitPart(){const form=document.getElementById('add-part-form');if(!form.reportValidity())return;const data=Object.fromEntries(new FormData(form));const order=getOrder(data.orderId);if(!order){toast('Selecione uma OS válida.','error');return;}let photo='';const file=form.elements.photo?.files?.[0];if(file){if(file.size>8_000_000){toast('A foto da peça excede 8 MB.','error');return;}photo=(await fileToPhoto(file,'Peça solicitada')).src;}const part={id:id('p'),name:data.name.trim(),code:(data.code||'').trim(),dimensions:(data.dimensions||'').trim(),quantity:data.quantity||'1',unit:data.unit||'un',position:(data.position||'').trim(),technicalNote:(data.technicalNote||'').trim(),photo,status:'Solicitada',requestedBy:'Oficina',purchase:{supplier:'',expectedDate:'',quote:'',price:'',note:'',location:''}};order.parts.push(part);order.noPartsRequired=false;db.catalog=db.catalog||{};db.catalog.partNames=db.catalog.partNames||[];if(!db.catalog.partNames.includes(part.name))db.catalog.partNames.unshift(part.name);addActivity(`${part.name} solicitado tecnicamente para a OS #${order.number} e enviado para Compras.`);saveDB();closeModal();render();toast('Solicitação técnica enviada para Compras.');}
+  async function submitPart(){const form=document.getElementById('add-part-form');if(!form.reportValidity())return;const data=Object.fromEntries(new FormData(form));const order=getOrder(data.orderId);if(!order){toast('Selecione uma OS válida.','error');return;}let photo='';const file=form.elements.photo?.files?.[0];if(file){try{photo=(await fileToPhoto(file,'Peça solicitada')).src;}catch(error){toast(error?.message||'Não foi possível processar a foto da peça.','error');return;}}const part={id:id('p'),name:data.name.trim(),code:(data.code||'').trim(),dimensions:(data.dimensions||'').trim(),quantity:data.quantity||'1',unit:data.unit||'un',position:(data.position||'').trim(),technicalNote:(data.technicalNote||'').trim(),photo,status:'Solicitada',requestedBy:'Oficina',purchase:{supplier:'',expectedDate:'',quote:'',price:'',note:'',location:''}};order.parts.push(part);order.noPartsRequired=false;db.catalog=db.catalog||{};db.catalog.partNames=db.catalog.partNames||[];if(!db.catalog.partNames.includes(part.name))db.catalog.partNames.unshift(part.name);addActivity(`${part.name} solicitado tecnicamente para a OS #${order.number} e enviado para Compras.`);saveDB();closeModal();render();toast('Solicitação técnica enviada para Compras.');}
   function submitPurchase(){const form=document.getElementById('purchase-form');if(!form?.reportValidity())return;const data=Object.fromEntries(new FormData(form));const order=getOrder(data.orderId),part=order?.parts.find(p=>p.id===data.partId);if(!part)return;part.purchase={supplier:(data.supplier||'').trim(),expectedDate:data.expectedDate||'',quote:(data.quote||'').trim(),price:(data.price||'').trim(),note:(data.note||'').trim(),location:(data.location||'').trim()};if(part.status==='Solicitada'&&(part.purchase.supplier||part.purchase.quote))part.status='Em cotação';addActivity(`Compras atualizou ${part.name} da OS #${order.number}.`);saveDB();closeModal();render();toast('Dados da compra atualizados.');}
   function submitMeasurement(){const form=document.getElementById('add-measurement-form');if(!form.reportValidity())return;const data=Object.fromEntries(new FormData(form));const order=getOrder(data.orderId);order.measurements.push({name:data.name,unit:data.unit,before:data.before||'—',after:data.after,limit:data.limit||'—',status:data.status||'Registrado'});addActivity(`${data.name} registrado na OS ${order.number}.`);saveDB();closeModal();render();toast('Medição registrada.');}
   function submitClient(){const form=document.getElementById('new-client-form');if(!form.reportValidity())return;const data=Object.fromEntries(new FormData(form));db.clients.push({id:id('c'),name:data.name,contact:data.contact,email:data.email,active:true});saveDB();closeModal();render();toast('Cliente cadastrado.');}
@@ -633,7 +633,7 @@
   function approveReport(orderId){const order=getOrder(orderId);if(!reportReady(order)){toast('O relatório possui pendências obrigatórias.','error');return;}order.report.approved=true;addActivity(`Relatório da OS #${order.number} aprovado por ${order.supervisor}.`);saveDB();render();toast('Relatório aprovado.');}
   function sendReport(orderId){const order=getOrder(orderId);if(!reportReady(order)){toast('Envio bloqueado: faltam dados obrigatórios.','error');return;}if(!order.report.approved){toast('Envio bloqueado: o supervisor ainda não aprovou.','error');return;}order.report.sent=true;order.report.sentAt=new Date().toISOString();if(order.stage!=='concluida'){order.handoffs=order.handoffs||[];order.handoffs.push({fromStage:order.stage,toStage:'concluida',fromTeam:stageTeam(order.stage),toTeam:stageTeam('concluida'),at:new Date().toISOString()});order.stage='concluida';order.availableSince=new Date().toISOString();}addActivity(`Relatório da OS ${order.number} enviado para ${order.report.recipient}. Processo concluído.`);saveDB();render();toast('Relatório enviado. OS concluída e disponível ao cliente.');}
   function scheduleReport(orderId){const value=document.getElementById('schedule-at').value;if(!value){toast('Informe uma data e horário.','error');return;}const order=getOrder(orderId);order.report.scheduledAt=value;saveDB();render();toast('Envio agendado.');}
-  async function handlePhotoUpload(input){const order=getOrder(input.dataset.order),group=input.dataset.group,files=[...input.files].slice(0,6);for(const file of files){if(file.size>3_000_000){toast(`A foto ${file.name} excede 3 MB.`, 'error');continue;}const data=await fileToDataURL(file);order.photos[group].push(data);}saveDB();render();toast('Fotos adicionadas.');}
+  async function handlePhotoUpload(input){const order=getOrder(input.dataset.order),group=input.dataset.group,files=[...input.files].slice(0,6);if(!order)return;order.photos[group]=order.photos[group]||[];let added=0;for(const file of files){try{order.photos[group].push(await fileToPhoto(file,group||''));added++;}catch(error){toast(error?.message||`Não foi possível processar ${file.name}.`,'error');}}input.value='';if(added){saveDB();render();toast(`${added} foto(s) adicionada(s) e compactada(s) automaticamente.`);}}
   function fileToDataURL(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});}
   function exportData(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`ar7-oficina-backup-${todayISO()}.json`;a.click();URL.revokeObjectURL(url);toast('Backup exportado.');}
 
@@ -717,29 +717,71 @@
     return `<div class="annotated-photo ${className}" style="aspect-ratio:${aspect}"><img src="${normalized.src}" alt="${safe(alt)}"><svg viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">${normalized.annotations.map(arrowMarkup).join('')}</svg></div>`;
   }
 
-  async function fileToPhoto(file, caption='') {
-    const original=await fileToDataURL(file);
-    const image=await new Promise(resolve=>{
+  const PHOTO_MAX_SOURCE_BYTES_V201=35*1024*1024;
+  const PHOTO_TARGET_BYTES_V201=420*1024;
+  const PHOTO_MAX_SIDE_V201=1600;
+
+  function dataUrlBytesV201(value='') {
+    const comma=String(value).indexOf(',');
+    const payload=comma>=0?String(value).slice(comma+1):String(value);
+    return Math.ceil(payload.length*3/4);
+  }
+
+  function imageFromFileV201(file) {
+    return new Promise((resolve,reject)=>{
+      const url=URL.createObjectURL(file);
       const img=new Image();
-      img.onload=()=>resolve(img);
-      img.onerror=()=>resolve(null);
-      img.src=original;
+      img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Formato de imagem não suportado neste dispositivo.'));};
+      img.src=url;
     });
-    if(!image) return {id:id('ph'),src:original,caption,annotations:[],width:600,height:420};
-    const maxSide=1600;
-    const scale=Math.min(1,maxSide/Math.max(image.naturalWidth||1,image.naturalHeight||1));
-    const width=Math.max(1,Math.round((image.naturalWidth||600)*scale));
-    const height=Math.max(1,Math.round((image.naturalHeight||420)*scale));
+  }
+
+  function canvasDataUrlV201(canvas,quality) {
+    if(typeof canvas.toBlob!=='function') return Promise.resolve(canvas.toDataURL('image/jpeg',quality));
+    return new Promise((resolve,reject)=>{
+      canvas.toBlob(blob=>{
+        if(!blob){reject(new Error('Não foi possível compactar a imagem.'));return;}
+        const reader=new FileReader();
+        reader.onload=()=>resolve(reader.result);
+        reader.onerror=()=>reject(reader.error||new Error('Falha ao ler a imagem compactada.'));
+        reader.readAsDataURL(blob);
+      },'image/jpeg',quality);
+    });
+  }
+
+  async function fileToPhoto(file, caption='') {
+    if(!file) throw new Error('Nenhuma imagem selecionada.');
+    if(file.size>PHOTO_MAX_SOURCE_BYTES_V201) throw new Error(`A imagem ${file.name||''} excede 35 MB.`);
+    const image=await imageFromFileV201(file);
+    const naturalWidth=image.naturalWidth||image.width||600;
+    const naturalHeight=image.naturalHeight||image.height||420;
+    let scale=Math.min(1,PHOTO_MAX_SIDE_V201/Math.max(naturalWidth,naturalHeight));
+    let width=Math.max(1,Math.round(naturalWidth*scale));
+    let height=Math.max(1,Math.round(naturalHeight*scale));
+    let quality=0.80;
+    let src='';
     const canvas=document.createElement('canvas');
-    canvas.width=width;canvas.height=height;
-    const ctx=canvas.getContext('2d',{alpha:false});
-    ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);ctx.drawImage(image,0,0,width,height);
-    const src=canvas.toDataURL('image/jpeg',0.82);
-    return {id:id('ph'),src,caption,annotations:[],width,height};
+    const render=()=>{
+      canvas.width=width;canvas.height=height;
+      const ctx=canvas.getContext('2d',{alpha:false});
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);ctx.drawImage(image,0,0,width,height);
+    };
+    render();
+    for(let pass=0;pass<7;pass++){
+      src=await canvasDataUrlV201(canvas,quality);
+      if(dataUrlBytesV201(src)<=PHOTO_TARGET_BYTES_V201) break;
+      if(quality>0.58){quality=Math.max(0.58,quality-0.07);continue;}
+      width=Math.max(900,Math.round(width*0.86));
+      height=Math.max(1,Math.round(naturalHeight*(width/naturalWidth)));
+      quality=0.72;
+      render();
+    }
+    return {id:id('ph'),src,caption,annotations:[],width,height,originalBytes:file.size,compressedBytes:dataUrlBytesV201(src)};
   }
   function photoGalleryV5(order, group, label, description='') {
     const list=order.photos[group] || [];
-    return `<section class="stage-photo-block" data-photo-group="${group}"><div class="stage-photo-head"><div><div class="section-eyebrow">EVIDÊNCIAS · ${list.length} FOTO(S)</div><h3>${safe(label)}</h3>${description?`<p>${safe(description)}</p>`:''}</div><label class="btn btn-primary btn-sm">${icon('camera',15)} Adicionar fotos<input type="file" accept="image/*" capture="environment" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label></div><div class="photo-grid photo-grid-v5">${list.map((photo,index)=>`<article class="photo-card-v5">${annotatedPhoto(photo,'','Foto '+label)}<div class="photo-card-actions"><button class="btn btn-light btn-sm" data-action="edit-photo" data-order="${order.id}" data-group="${group}" data-index="${index}">${icon('edit',14)} Setas e legenda</button><button class="icon-danger" data-action="delete-photo" data-order="${order.id}" data-group="${group}" data-index="${index}" aria-label="Excluir foto">${icon('trash',14)}</button></div>${photo.caption?`<small>${safe(photo.caption)}</small>`:'<small class="photo-caption-empty">Sem legenda</small>'}</article>`).join('') || `<label class="photo-empty-v5">${icon('camera',30)}<strong>Nenhuma foto adicionada</strong><span>Fotografe ou escolha arquivos. As imagens são comprimidas automaticamente para evitar travamentos.</span><input type="file" accept="image/*" capture="environment" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label>`}</div></section>`;
+    return `<section class="stage-photo-block" data-photo-group="${group}"><div class="stage-photo-head"><div><div class="section-eyebrow">EVIDÊNCIAS · ${list.length} FOTO(S)</div><h3>${safe(label)}</h3>${description?`<p>${safe(description)}</p>`:''}</div><div class="photo-upload-actions-v201"><label class="btn btn-primary btn-sm">${icon('camera',15)} Câmera<input type="file" accept="image/*" capture="environment" hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label><label class="btn btn-light btn-sm">${icon('file',15)} Galeria<input type="file" accept="image/*" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label></div></div><div class="photo-grid photo-grid-v5">${list.map((photo,index)=>`<article class="photo-card-v5">${annotatedPhoto(photo,'','Foto '+label)}<div class="photo-card-actions"><button class="btn btn-light btn-sm" data-action="edit-photo" data-order="${order.id}" data-group="${group}" data-index="${index}">${icon('edit',14)} Setas e legenda</button><button class="icon-danger" data-action="delete-photo" data-order="${order.id}" data-group="${group}" data-index="${index}" aria-label="Excluir foto">${icon('trash',14)}</button></div>${photo.caption?`<small>${safe(photo.caption)}</small>`:'<small class="photo-caption-empty">Sem legenda</small>'}</article>`).join('') || `<label class="photo-empty-v5">${icon('camera',30)}<strong>Nenhuma foto adicionada</strong><span>Use Câmera ou Galeria acima. Fotos grandes são compactadas automaticamente.</span><input type="file" accept="image/*" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label>`}</div></section>`;
   }
   function partsTableV5(order, purchaseMode=false) {
     const rows=(order.parts||[]).map(part=>{
@@ -884,7 +926,7 @@
     const suggestions=[...new Set([...(db.equipment.filter(e=>e.clientId===newOrderDraft.clientId).map(e=>equipmentDescription(e))),...(db.catalog?.equipmentDescriptions||[]),...equipmentSuggestions()])];
     let content='';
     if(step===1) content=`<form id="new-order-wizard" data-step="1" class="form-grid"><div class="auto-number span-2"><small>Número automático</small><strong>OS ${number}</strong><span>Ninguém digita ou repete a numeração.</span></div><div class="form-group"><label>Cliente *</label><select class="select" name="clientId" required><option value="">Selecione</option>${db.clients.filter(c=>c.active).map(c=>`<option value="${c.id}" ${newOrderDraft.clientId===c.id?'selected':''}>${safe(c.name)}</option>`).join('')}</select></div><div class="form-group"><label>Equipamento *</label><input class="input equipment-main-input" name="equipmentText" list="equipment-description-list" value="${safe(newOrderDraft.equipmentText)}" required autocomplete="off" placeholder="Ex.: Motor WEG 3 cv"><datalist id="equipment-description-list">${suggestions.map(item=>`<option value="${safe(item)}"></option>`).join('')}</datalist></div><div class="equipment-entry-hint span-2">${icon('check',16)}<span>Digite normalmente. Se já existir para o cliente, será reutilizado; se for novo, ficará salvo como sugestão.</span></div><details class="optional-details span-2" ${newOrderDraft.equipmentTag||newOrderDraft.equipmentSerial?'open':''}><summary>TAG e número de série - opcionais</summary><div class="form-grid optional-details-body"><div class="form-group"><label>TAG</label><input class="input" name="equipmentTag" value="${safe(newOrderDraft.equipmentTag)}"></div><div class="form-group"><label>Número de série</label><input class="input" name="equipmentSerial" value="${safe(newOrderDraft.equipmentSerial)}"></div></div></details></form>`;
-    if(step===2) content=`<form id="new-order-wizard" data-step="2" class="form-grid"><div class="selection-summary span-2"><span>OS ${number}</span><strong>${safe(client?.name)} · ${safe(newOrderDraft.equipmentText)}</strong></div><div class="form-section span-2"><strong>Recebimento completo</strong><p>Preencha tudo aqui, inclusive as fotos. Ao finalizar, a OS será liberada diretamente para a Oficina.</p></div><div class="form-group"><label>Data de entrada *</label><input class="input" type="date" name="entryDate" value="${newOrderDraft.entryDate}" required></div><div class="form-group"><label>Prazo previsto *</label><input class="input" type="date" name="dueDate" min="${newOrderDraft.entryDate}" value="${newOrderDraft.dueDate}" required></div><div class="form-group"><label>Recebido por *</label><input class="input" name="receivedBy" value="${safe(newOrderDraft.receivedBy)}" required></div><div class="form-group"><label>Contato de quem entregou</label><input class="input" name="deliveryContact" value="${safe(newOrderDraft.deliveryContact)}"></div><div class="form-group span-2"><label>Defeito informado pelo cliente *</label><textarea class="textarea" name="defect" required>${safe(newOrderDraft.defect)}</textarea></div><div class="form-group span-2"><label>Condição no recebimento</label><textarea class="textarea" name="condition" placeholder="Danos, sujeira, eixo travado, caixa de ligação...">${safe(newOrderDraft.condition)}</textarea></div><div class="form-group span-2"><label>Acessórios recebidos</label><input class="input" name="accessories" value="${safe(newOrderDraft.accessories)}" placeholder="Acoplamento, base, tampa, cabos..."></div><div class="form-group span-2"><label>Técnico inicial</label><input class="input" name="technician" value="${safe(newOrderDraft.technician)}"></div><div class="form-group span-2"><label>Fotos do recebimento *</label><label class="wizard-photo-upload">${icon('camera',25)}<strong>Fotografar ou escolher fotos</strong><span>Plaqueta, todos os lados, danos e acessórios recebidos.</span><input type="file" accept="image/*" capture="environment" multiple hidden data-action="wizard-photo-upload"></label><div class="wizard-photo-grid">${newOrderDraft.receptionPhotos.map((photo,index)=>`<div class="wizard-photo-item">${annotatedPhoto(photo)}<button type="button" data-action="delete-wizard-photo" data-index="${index}">×</button></div>`).join('')||'<div class="wizard-no-photo">Nenhuma foto adicionada.</div>'}</div></div></form>`;
+    if(step===2) content=`<form id="new-order-wizard" data-step="2" class="form-grid"><div class="selection-summary span-2"><span>OS ${number}</span><strong>${safe(client?.name)} · ${safe(newOrderDraft.equipmentText)}</strong></div><div class="form-section span-2"><strong>Recebimento completo</strong><p>Preencha tudo aqui, inclusive as fotos. Ao finalizar, a OS será liberada diretamente para a Oficina.</p></div><div class="form-group"><label>Data de entrada *</label><input class="input" type="date" name="entryDate" value="${newOrderDraft.entryDate}" required></div><div class="form-group"><label>Prazo previsto *</label><input class="input" type="date" name="dueDate" min="${newOrderDraft.entryDate}" value="${newOrderDraft.dueDate}" required></div><div class="form-group"><label>Recebido por *</label><input class="input" name="receivedBy" value="${safe(newOrderDraft.receivedBy)}" required></div><div class="form-group"><label>Contato de quem entregou</label><input class="input" name="deliveryContact" value="${safe(newOrderDraft.deliveryContact)}"></div><div class="form-group span-2"><label>Defeito informado pelo cliente *</label><textarea class="textarea" name="defect" required>${safe(newOrderDraft.defect)}</textarea></div><div class="form-group span-2"><label>Condição no recebimento</label><textarea class="textarea" name="condition" placeholder="Danos, sujeira, eixo travado, caixa de ligação...">${safe(newOrderDraft.condition)}</textarea></div><div class="form-group span-2"><label>Acessórios recebidos</label><input class="input" name="accessories" value="${safe(newOrderDraft.accessories)}" placeholder="Acoplamento, base, tampa, cabos..."></div><div class="form-group span-2"><label>Técnico inicial</label><input class="input" name="technician" value="${safe(newOrderDraft.technician)}"></div><div class="form-group span-2"><label>Fotos do recebimento *</label><div class="wizard-photo-actions-v201"><label class="wizard-photo-upload">${icon('camera',25)}<strong>Tirar foto</strong><span>Abre a câmera traseira do tablet/celular.</span><input type="file" accept="image/*" capture="environment" hidden data-action="wizard-photo-upload"></label><label class="wizard-photo-upload gallery-v201">${icon('file',25)}<strong>Escolher da galeria</strong><span>Selecione uma ou várias fotos já salvas.</span><input type="file" accept="image/*" multiple hidden data-action="wizard-photo-upload"></label></div><small class="photo-compress-note-v201">Fotos grandes são redimensionadas e compactadas automaticamente antes de salvar.</small><div class="wizard-photo-grid">${newOrderDraft.receptionPhotos.map((photo,index)=>`<div class="wizard-photo-item">${annotatedPhoto(photo)}<button type="button" data-action="delete-wizard-photo" data-index="${index}">×</button></div>`).join('')||'<div class="wizard-no-photo">Nenhuma foto adicionada.</div>'}</div></div></form>`;
     if(step===3) content=`<div class="wizard-review"><div class="review-title">${icon('check',22)} Confira o recebimento</div><div class="review-grid"><div><span>Número</span><strong>OS ${number}</strong></div><div><span>Cliente</span><strong>${safe(client?.name)}</strong></div><div class="wide"><span>Equipamento</span><strong>${safe(newOrderDraft.equipmentText)}</strong></div><div><span>Entrada / Prazo</span><strong>${formatDate(newOrderDraft.entryDate)} · ${formatDate(newOrderDraft.dueDate)}</strong></div><div><span>Recebido por</span><strong>${safe(newOrderDraft.receivedBy)}</strong></div><div class="wide"><span>Defeito informado</span><strong>${safe(newOrderDraft.defect)}</strong></div><div class="wide"><span>Fotos</span><strong>${newOrderDraft.receptionPhotos.length} foto(s) de recebimento</strong></div></div><div class="handoff-preview"><span>Ao confirmar</span><strong>A Recepção será concluída e a OS ficará disponível para Diagnóstico</strong><small>Não será necessário abrir outra tela para completar o recebimento.</small></div></div>`;
     const footer=`<button class="btn btn-light" data-action="close-modal">Cancelar</button>${step>1?`<button class="btn btn-light" data-action="wizard-back" data-step="${step}">Voltar</button>`:''}${step<3?`<button class="btn btn-primary" data-action="wizard-next" data-step="${step}">Próximo ${icon('arrow',16)}</button>`:`<button class="btn btn-primary" data-action="submit-new-order">${icon('save')} Gerar OS e liberar Oficina</button>`}`;
     openModal('Nova ordem de serviço',`${wizardSteps(step)}${content}`,footer);
@@ -916,8 +958,14 @@
   async function handleWizardPhotoUpload(input) {
     saveWizardFormLoose();
     const files=[...input.files].slice(0,8);
-    for(const file of files){if(file.size>4_000_000){toast(`${file.name} excede 4 MB.`,'error');continue;}newOrderDraft.receptionPhotos.push(await fileToPhoto(file,'Recebimento'));}
-    newOrderModal(2); toast('Fotos adicionadas ao recebimento.');
+    let added=0;
+    for(const file of files){
+      try{newOrderDraft.receptionPhotos.push(await fileToPhoto(file,'Recebimento'));added++;}
+      catch(error){toast(error?.message||`Não foi possível processar ${file.name}.`,'error');}
+    }
+    input.value='';
+    newOrderModal(2);
+    if(added) toast(`${added} foto(s) adicionada(s) e compactada(s) automaticamente.`);
   }
 
   async function handlePhotoUpload(input) {
@@ -925,8 +973,13 @@
     saveStageData(order,false);
     order.photos[group]=order.photos[group]||[];
     const files=[...input.files].slice(0,8);
-    for(const file of files){if(file.size>4_000_000){toast(`${file.name} excede 4 MB.`,'error');continue;}order.photos[group].push(await fileToPhoto(file,({before:'Recebimento',during:'Diagnóstico',assembly:'Montagem',after:'Finalização'})[group]||''));}
-    saveDB();render();toast('Fotos adicionadas.');
+    let added=0;
+    for(const file of files){
+      try{order.photos[group].push(await fileToPhoto(file,({before:'Recebimento',during:'Diagnóstico',assembly:'Montagem',after:'Finalização'})[group]||''));added++;}
+      catch(error){toast(error?.message||`Não foi possível processar ${file.name}.`,'error');}
+    }
+    input.value='';
+    if(added){saveDB();render();toast(`${added} foto(s) adicionada(s) e compactada(s) automaticamente.`);}
   }
 
   function openPhotoEditor(orderId,group,index) {
@@ -2422,7 +2475,7 @@
   const photoGalleryBeforeV13=photoGalleryV5;
   photoGalleryV5=function(order,group,label,description=''){
     const list=order.photos[group]||[];
-    return `<section class="stage-photo-block" data-photo-group="${group}"><div class="stage-photo-head"><div><div class="section-eyebrow">EVIDÊNCIAS · ${list.length} FOTO(S)</div><h3>${safe(label)}</h3>${description?`<p>${safe(description)}</p>`:''}</div><label class="btn btn-primary btn-sm">${icon('camera',15)} Adicionar fotos<input type="file" accept="image/*" capture="environment" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label></div><div class="photo-grid photo-grid-v5">${list.map((photo,index)=>{const p=normalizePhotoV5(photo),obs=photoObservationV13(photo);return `<article class="photo-card-v5 photo-card-v13">${annotatedPhoto(p,'','Foto '+label)}<div class="photo-card-actions"><button class="btn btn-light btn-sm" data-action="edit-photo" data-order="${order.id}" data-group="${group}" data-index="${index}">${icon('edit',14)} Setas e observações</button><button class="icon-danger" data-action="delete-photo" data-order="${order.id}" data-group="${group}" data-index="${index}" aria-label="Excluir foto">${icon('trash',14)}</button></div><div class="photo-metadata-v13"><strong>${safe(p.caption||`${label} - foto ${index+1}`)}</strong><p>${obs?safe(obs):'Sem observação técnica registrada.'}</p></div></article>`;}).join('')||`<label class="photo-empty-v5">${icon('camera',30)}<strong>Nenhuma foto adicionada</strong><span>Adicione evidências e registre a observação técnica de cada imagem.</span><input type="file" accept="image/*" capture="environment" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label>`}</div></section>`;
+    return `<section class="stage-photo-block" data-photo-group="${group}"><div class="stage-photo-head"><div><div class="section-eyebrow">EVIDÊNCIAS · ${list.length} FOTO(S)</div><h3>${safe(label)}</h3>${description?`<p>${safe(description)}</p>`:''}</div><div class="photo-upload-actions-v201"><label class="btn btn-primary btn-sm">${icon('camera',15)} Câmera<input type="file" accept="image/*" capture="environment" hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label><label class="btn btn-light btn-sm">${icon('file',15)} Galeria<input type="file" accept="image/*" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label></div></div><div class="photo-grid photo-grid-v5">${list.map((photo,index)=>{const p=normalizePhotoV5(photo),obs=photoObservationV13(photo);return `<article class="photo-card-v5 photo-card-v13">${annotatedPhoto(p,'','Foto '+label)}<div class="photo-card-actions"><button class="btn btn-light btn-sm" data-action="edit-photo" data-order="${order.id}" data-group="${group}" data-index="${index}">${icon('edit',14)} Setas e observações</button><button class="icon-danger" data-action="delete-photo" data-order="${order.id}" data-group="${group}" data-index="${index}" aria-label="Excluir foto">${icon('trash',14)}</button></div><div class="photo-metadata-v13"><strong>${safe(p.caption||`${label} - foto ${index+1}`)}</strong><p>${obs?safe(obs):'Sem observação técnica registrada.'}</p></div></article>`;}).join('')||`<label class="photo-empty-v5">${icon('camera',30)}<strong>Nenhuma foto adicionada</strong><span>Use Câmera ou Galeria acima. Fotos grandes são compactadas automaticamente antes de salvar.</span><input type="file" accept="image/*" multiple hidden data-action="photo-upload" data-order="${order.id}" data-group="${group}"></label>`}</div></section>`;
   };
 
   openPhotoEditor=function(orderId,group,index){
@@ -3097,7 +3150,7 @@
       db.orders=[];
       db.deletedOrders=[];
       db.activity=(Array.isArray(db.activity)?db.activity:[]).filter(item=>!/(\bOS\b|ordem de servi[cç]o|proposta|or[cç]amento)/i.test(String(item?.text||'')));
-      db.version=19;
+      db.version=20;
       localStorage.setItem(OS_RESET_FLAG_V19,'1');
       saveDB();
       return true;
@@ -3202,5 +3255,130 @@
   window.addEventListener('hashchange',render);
   document.addEventListener('click',event=>{if(event.target.id==='sidebar-overlay'){document.getElementById('sidebar')?.classList.remove('open');event.target.hidden=true;}});
   if('serviceWorker' in navigator) window.addEventListener('load',async()=>{try{const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(reg=>reg.unregister()));if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(key=>caches.delete(key)));}}catch{}});
+
+  /* =========================
+     AR7 V20.1 — banco central, fotos e sincronização multi-dispositivo
+     ========================= */
+  const saveDBLocalV20=saveDB;
+  const REMOTE_SYNC_INTERVAL_V20=5000;
+  let remoteRevisionV20=0;
+  let remoteDirtyV20=false;
+  let remoteSaveInFlightV20=false;
+  let remoteSaveTimerV20=null;
+  let remotePollTimerV20=null;
+  let remoteAuthenticatedV20=false;
+  let remoteInitialSyncDoneV20=false;
+
+  function remoteStatusV20(state,message=''){
+    document.documentElement.dataset.ar7Sync=state;
+    let badge=document.getElementById('ar7-sync-badge-v20');
+    if(!badge){
+      badge=document.createElement('div');badge.id='ar7-sync-badge-v20';badge.className='sync-badge-v20';document.body.appendChild(badge);
+    }
+    const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local'};
+    badge.className=`sync-badge-v20 ${state}`;
+    badge.textContent=message||labels[state]||state;
+    badge.title='AR7 V20.1 — sincronização entre dispositivos';
+  }
+
+  async function fetchV20(url,options={}){
+    return fetch(url,{credentials:'same-origin',cache:'no-store',...options,headers:{'Accept':'application/json',...(options.body?{'Content-Type':'application/json'}:{}),...(options.headers||{})}});
+  }
+
+  function loginOverlayV20(){
+    return new Promise(resolve=>{
+      document.getElementById('ar7-login-v20')?.remove();
+      const overlay=document.createElement('div');overlay.id='ar7-login-v20';overlay.className='login-gate-v20';
+      overlay.innerHTML=`<div class="login-card-v20"><img src="./assets/ar7-logo.png" alt="AR7"><small>AR7 Gestão da Oficina</small><h1>Acesso ao sistema</h1><p>Entre para carregar o banco central compartilhado da oficina.</p><form id="ar7-login-form-v20"><label>Usuário<input id="ar7-login-user-v20" autocomplete="username" value="admin" required></label><label>Senha<input id="ar7-login-pass-v20" type="password" autocomplete="current-password" required></label><div id="ar7-login-error-v20" class="login-error-v20"></div><button class="btn btn-primary" type="submit">Entrar e sincronizar</button></form></div>`;
+      document.body.appendChild(overlay);
+      const form=overlay.querySelector('form'),user=overlay.querySelector('#ar7-login-user-v20'),pass=overlay.querySelector('#ar7-login-pass-v20'),error=overlay.querySelector('#ar7-login-error-v20');
+      setTimeout(()=>pass.focus(),50);
+      form.addEventListener('submit',async event=>{
+        event.preventDefault();error.textContent='';const button=form.querySelector('button');button.disabled=true;button.textContent='Entrando...';
+        try{
+          const response=await fetchV20('/api/auth/login',{method:'POST',body:JSON.stringify({username:user.value.trim(),password:pass.value})});
+          const payload=await response.json().catch(()=>({}));
+          if(!response.ok){error.textContent=payload.error||'Não foi possível entrar.';button.disabled=false;button.textContent='Entrar e sincronizar';return;}
+          overlay.remove();remoteAuthenticatedV20=true;resolve(true);
+        }catch(e){error.textContent='Servidor indisponível. Verifique sua conexão.';button.disabled=false;button.textContent='Entrar e sincronizar';}
+      });
+    });
+  }
+
+  async function ensureRemoteAuthV20(){
+    try{
+      const response=await fetchV20('/api/auth/status');
+      if(response.ok){remoteAuthenticatedV20=true;return true;}
+      if(response.status===503){remoteStatusV20('local','Banco central ainda não configurado');return false;}
+    }catch(error){remoteStatusV20('offline');return false;}
+    return loginOverlayV20();
+  }
+
+  async function pushRemoteStateV20(){
+    if(remoteSaveInFlightV20||!remoteAuthenticatedV20)return false;
+    remoteSaveInFlightV20=true;remoteStatusV20('saving');
+    try{
+      const response=await fetchV20('/api/state',{method:'PUT',body:JSON.stringify({data:db,clientVersion:APP_VERSION})});
+      if(response.status===401){remoteAuthenticatedV20=false;await ensureRemoteAuthV20();remoteSaveInFlightV20=false;return pushRemoteStateV20();}
+      const payload=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(payload.error||`HTTP ${response.status}`);
+      remoteRevisionV20=Number(payload.revision||remoteRevisionV20||0);remoteDirtyV20=false;remoteStatusV20('online');return true;
+    }catch(error){console.warn('Falha ao sincronizar com banco central',error);remoteDirtyV20=true;remoteStatusV20('offline','Alteração salva neste dispositivo; banco aguardando conexão');return false;}
+    finally{remoteSaveInFlightV20=false;}
+  }
+
+  function scheduleRemoteSaveV20(){
+    remoteDirtyV20=true;
+    clearTimeout(remoteSaveTimerV20);
+    remoteSaveTimerV20=setTimeout(()=>{pushRemoteStateV20();},350);
+  }
+
+  saveDB=function(){
+    const localOk=saveDBLocalV20();
+    if(remoteInitialSyncDoneV20)scheduleRemoteSaveV20();
+    return localOk||remoteAuthenticatedV20;
+  };
+
+  async function pullRemoteStateV20(initial=false){
+    if(!remoteAuthenticatedV20||remoteSaveInFlightV20||(!initial&&remoteDirtyV20))return false;
+    if(initial)remoteStatusV20('syncing');
+    try{
+      const response=await fetchV20('/api/state');
+      if(response.status===401){remoteAuthenticatedV20=false;if(await ensureRemoteAuthV20())return pullRemoteStateV20(initial);return false;}
+      if(response.status===404){
+        remoteInitialSyncDoneV20=true;
+        const uploaded=await pushRemoteStateV20();
+        if(uploaded)toast('Banco central criado com os dados deste dispositivo.');
+        return uploaded;
+      }
+      const payload=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(payload.error||`HTTP ${response.status}`);
+      const incoming=normalizeAfterLoadV5(payload.data);
+      const incomingRevision=Number(payload.revision||0);
+      if(incoming&&(initial||incomingRevision>remoteRevisionV20)){
+        db=incoming;db.version=APP_VERSION;
+        try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(error){console.warn('Cache local cheio; dados continuam disponíveis pelo banco central.',error);}
+        remoteRevisionV20=incomingRevision;
+        if(remoteInitialSyncDoneV20||initial)render();
+      }
+      remoteInitialSyncDoneV20=true;remoteDirtyV20=false;remoteStatusV20('online');return true;
+    }catch(error){console.warn('Banco central indisponível',error);remoteInitialSyncDoneV20=true;remoteStatusV20('offline');return false;}
+  }
+
+  async function initRemoteSyncV20(){
+    remoteStatusV20('syncing');
+    const authenticated=await ensureRemoteAuthV20();
+    if(!authenticated){remoteInitialSyncDoneV20=true;return;}
+    await pullRemoteStateV20(true);
+    clearInterval(remotePollTimerV20);
+    remotePollTimerV20=setInterval(()=>pullRemoteStateV20(false),REMOTE_SYNC_INTERVAL_V20);
+  }
+
+  const shellBeforeV20=shell;
+  shell=function(content,route,portal=false,portalClientId=''){
+    return shellBeforeV20(content,route,portal,portalClientId).replace(/<small>v19<\/small>/g,'<small>v20.1</small>');
+  };
+
   render();
+  initRemoteSyncV20();
 })();

@@ -828,3 +828,26 @@ body{background:linear-gradient(180deg,#f7f7f8 0,#f3f3f5 100%);-webkit-font-smoo
   .portal-proposal-card-v18{padding:14px}.portal-proposal-card-head-v18 h3{font-size:16px}.portal-proposal-decisionbar-v18{padding:13px}.photo-grid,.wizard-photo-grid{grid-template-columns:1fr!important}
 }
 @media(max-width:440px){.executive-kpis-v19{grid-template-columns:1fr 1fr}.executive-kpi-v19{min-height:94px}.executive-kpi-v19:nth-child(5){grid-column:1/-1}.monthly-chart-v19{gap:4px}.month-bar-v19 b{font-size:8px}.month-group-v19>span{font-size:9px}.modal-foot{grid-template-columns:1fr}.head-actions{display:grid;width:100%;grid-template-columns:1fr}.head-actions .btn{width:100%}.portal-proposal-actions-v18,.portal-approval-actions-v18{display:grid;grid-template-columns:1fr}.portal-proposal-actions-v18 .btn,.portal-approval-actions-v18 .btn{width:100%}}
+
+/* AR7 V20 — login e sincronização com banco central */
+.sync-badge-v20{position:fixed;right:18px;bottom:18px;z-index:1200;padding:8px 12px;border-radius:999px;background:#242326;color:#fff;font:600 12px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.18);pointer-events:none;opacity:.92}
+.sync-badge-v20.online{background:#1f7a4f}.sync-badge-v20.saving,.sync-badge-v20.syncing{background:#775d14}.sync-badge-v20.offline{background:#9e1722}.sync-badge-v20.local{background:#5d5b61}
+.login-gate-v20{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,rgba(20,19,22,.97),rgba(49,46,52,.96));backdrop-filter:blur(8px)}
+.login-card-v20{width:min(430px,100%);background:#fff;border-radius:22px;padding:30px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.login-card-v20 img{display:block;max-width:130px;max-height:60px;object-fit:contain;margin:0 0 18px}.login-card-v20 small{display:block;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:#9e1722;margin-bottom:8px}.login-card-v20 h1{margin:0 0 8px;font-size:28px;color:#242326}.login-card-v20 p{margin:0 0 22px;color:#66616a;line-height:1.45}
+.login-card-v20 form{display:grid;gap:15px}.login-card-v20 label{display:grid;gap:7px;font-size:13px;font-weight:750;color:#343137}.login-card-v20 input{width:100%;min-height:46px;border:1px solid #d8d4da;border-radius:11px;padding:0 13px;font:500 15px system-ui;background:#fff}.login-card-v20 input:focus{outline:2px solid rgba(158,23,34,.18);border-color:#9e1722}.login-card-v20 button{width:100%;min-height:48px;margin-top:3px}.login-error-v20{min-height:18px;color:#a31722;font-size:13px;font-weight:700}
+@media(max-width:640px){.login-gate-v20{padding:14px}.login-card-v20{padding:24px 20px;border-radius:18px}.login-card-v20 h1{font-size:24px}.sync-badge-v20{right:10px;bottom:10px;max-width:calc(100vw - 20px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+
+/* AR7 V20.1 - câmera + galeria e fotos grandes */
+.photo-upload-actions-v201{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.photo-upload-actions-v201 .btn{min-height:38px}
+.wizard-photo-actions-v201{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.wizard-photo-actions-v201 .wizard-photo-upload{min-height:112px}
+.wizard-photo-upload.gallery-v201{border-style:solid;background:#f7f9fc}
+.photo-compress-note-v201{display:block;margin:8px 2px 0;color:var(--muted);font-size:11px;line-height:1.45}
+@media(max-width:720px){
+  .photo-upload-actions-v201{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .photo-upload-actions-v201 .btn{width:100%;justify-content:center}
+  .wizard-photo-actions-v201{grid-template-columns:1fr}
+  .wizard-photo-actions-v201 .wizard-photo-upload{min-height:96px}
+}
