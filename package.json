@@ -1,0 +1,16 @@
+{
+  "name": "ar7-gestao-oficina",
+  "version": "19.0.0",
+  "private": true,
+  "description": "Gestão de oficina, cotações, propostas comerciais, aprovações e relatórios técnicos da AR7 Elétrica.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js 8108 --open --auto-port",
+    "check": "node --check app.js && node --check server.js",
+    "test": "node tests/smoke-v19.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

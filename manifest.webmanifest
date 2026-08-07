@@ -1,0 +1,17 @@
+{
+  "name": "AR7 Elétrica — Gestão da Oficina",
+  "short_name": "AR7 Oficina",
+  "description": "Gestão de ordens de serviço, cotações, orçamentos, oficina, peças e relatórios técnicos.",
+  "start_url": "./#dashboard",
+  "display": "standalone",
+  "background_color": "#f5f5f6",
+  "theme_color": "#242326",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
