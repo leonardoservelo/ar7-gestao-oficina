@@ -193,7 +193,7 @@ async function requestHandler(req,res){
   if(url.pathname==='/health'){
     let database=false;
     if(pool){try{await ensureSchema();await pool.query('SELECT 1');database=true;}catch(error){console.error('Health database check',error.message);}}
-    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.1.0',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
+    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.0',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
   }
   if(url.pathname.startsWith('/api/')){
     try{if(await handleApi(req,res,url))return;}catch(error){console.error('API error',error);json(res,error.statusCode||500,{ok:false,error:'Erro interno da API.'});return;}
@@ -232,7 +232,7 @@ function listenOn(candidate){
     server=candidateServer;
     const url=`http://localhost:${candidate}/#dashboard`;
     console.log('==============================================================');
-    console.log(' AR7 Gestao da Oficina V20.1 - Banco Central + Fotos');
+    console.log(' AR7 Gestao da Oficina V20.2 - Banco Central + UX Mobile + Relatorio');
     console.log(` Servidor: ${host}:${candidate}`);
     console.log(` Acesso local: ${url}`);
     console.log(` Banco central: ${DATABASE_URL?'configurado':'NAO configurado'}`);

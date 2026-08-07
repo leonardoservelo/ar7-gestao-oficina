@@ -851,3 +851,470 @@ body{background:linear-gradient(180deg,#f7f7f8 0,#f3f3f5 100%);-webkit-font-smoo
   .wizard-photo-actions-v201{grid-template-columns:1fr}
   .wizard-photo-actions-v201 .wizard-photo-upload{min-height:96px}
 }
+
+/* =========================
+   AR7 V20.2 — UX tablet/celular, fluxo compacto, prontidão e relatório
+   ========================= */
+.workflow-card-v202{padding:16px 18px;margin-bottom:12px;overflow:visible}
+.workflow-card-v202 .workflow-title{align-items:center;margin-bottom:12px}
+.workflow-card-v202 .workflow-title h2{font-size:17px;margin-top:3px}
+.workflow-subtitle-v202{margin:4px 0 0;color:var(--muted);font-size:10px;line-height:1.35}
+.workflow-compact-v202{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;padding:0;overflow:visible}
+.workflow-compact-v202 .workflow-step{min-width:0;min-height:82px;padding:9px 10px;transform:none!important;border-radius:10px;display:flex;flex-direction:column;justify-content:flex-start}
+.workflow-compact-v202 .workflow-step::after{display:none!important}
+.workflow-compact-v202 .workflow-step-top{margin-bottom:6px;gap:5px}
+.workflow-compact-v202 .workflow-step-top>span{width:23px;height:23px;border-radius:7px;font-size:10px}
+.workflow-compact-v202 .workflow-step-top small{font-size:7px;line-height:1.15;text-align:right;max-width:95px}
+.workflow-compact-v202 .workflow-step strong{font-size:10.5px;line-height:1.2}
+.workflow-compact-v202 .workflow-step p{font-size:8px;line-height:1.3;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.current-task-v202{grid-template-columns:160px minmax(0,1fr);margin-bottom:12px}
+.current-task-v202 .current-team{min-height:138px;padding:18px}
+.current-task-v202 .current-team strong{font-size:19px}
+.current-task-v202 .task-body{padding:16px;grid-template-columns:minmax(0,1fr) 190px;gap:14px}
+.current-task-v202 .requirement-list{gap:6px;margin-top:8px}
+.current-task-v202 .requirement{padding:8px 9px}
+.current-task-v202 .requirement span{width:23px;height:23px}
+.current-task-v202 .requirement strong{font-size:10.5px}
+.current-task-v202 .next-team{padding:12px}
+.current-task-v202 .next-team strong{font-size:14px}
+.current-task-v202 .task-actions{padding:11px 14px}
+.readiness-actions-v202 .btn-success{box-shadow:0 7px 16px rgba(35,146,87,.16)}
+.readiness-pending-v202{color:#7b7479!important;background:#f4f2f4!important;border-color:#ddd8dc!important;box-shadow:none!important}
+.readiness-pending-v202:disabled{opacity:.78;cursor:not-allowed}
+
+.quotation-parts-only-v202 .quote-part-card-v11{margin-bottom:10px}
+.quotation-parts-toolbar-v202{display:grid;grid-template-columns:160px 230px minmax(240px,1fr);gap:10px;align-items:end;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#faf9fa}
+.quotation-parts-toolbar-v202>div:not(.form-group){display:grid;gap:3px}.quotation-parts-toolbar-v202 small{font-size:8px;color:var(--muted);font-weight:850;letter-spacing:.06em}.quotation-parts-toolbar-v202 strong{font-size:17px}
+.quotation-note-v202{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.budget-parts-readonly-v202{border:1px solid var(--line);border-radius:13px;background:#fbfafb;overflow:hidden}
+.budget-parts-readonly-v202>.stage-photo-head{padding:13px 15px;margin:0;border-bottom:1px solid var(--line)}
+.budget-parts-readonly-v202>.stage-photo-head>strong{font-size:17px;color:#2b292c}
+.budget-parts-readonly-v202 .table-wrap{border:0;border-radius:0}
+.budget-parts-readonly-v202 .table th,.budget-parts-readonly-v202 .table td{padding:9px 10px;font-size:10px}
+.budget-parts-readonly-v202 .table td small{display:block;margin-top:3px;color:var(--muted);font-size:8px}
+.commercial-values-v202{border-color:#ddc9cc;background:linear-gradient(180deg,#fff,#fffafb)}
+.section-help-v202{margin:-2px 0 12px;color:var(--muted);font-size:10px}
+
+/* Teclado virtual: o campo focado deve permanecer visível acima do teclado */
+:root{--ar7-visible-height-v202:100dvh;--ar7-keyboard-v202:0px}
+.keyboard-open-v202 .sync-badge-v20{display:none}
+.keyboard-open-v202 .topbar{position:relative}
+.keyboard-open-v202 .modal-backdrop{height:var(--ar7-visible-height-v202);min-height:0;align-items:stretch;padding:0}
+.keyboard-open-v202 .modal{max-height:var(--ar7-visible-height-v202);height:var(--ar7-visible-height-v202);border-radius:0}
+.keyboard-open-v202 .modal-body{scroll-padding-top:74px;scroll-padding-bottom:92px}
+.keyboard-open-v202 .modal-foot{padding-bottom:max(12px,env(safe-area-inset-bottom));position:sticky;bottom:0;z-index:3}
+.keyboard-open-v202 .page{padding-bottom:96px}
+textarea.auto-grow-v202{overflow-y:hidden}
+
+/* Relatório técnico: menos espaço morto e assinaturas sem contorno externo */
+.technical-report-only-v13{gap:14px}
+.technical-report-only-v13 .report-page{padding:38px 46px 58px}
+.technical-report-only-v13 .report-page-header{margin-bottom:16px;padding-bottom:10px}
+.technical-report-only-v13 .report-info-grid{gap:8px;margin-bottom:2px}
+.technical-report-only-v13 .report-info-grid article{padding:10px 12px}
+.technical-report-only-v13 .report-text-section{margin-top:13px}
+.technical-report-only-v13 .report-text-section h2,.technical-report-only-v13 .report-section-title{margin-bottom:7px;padding-bottom:6px}
+.technical-report-only-v13 .report-text-section p{line-height:1.58}
+.technical-report-only-v13 .report-table{margin:7px 0 13px}
+.technical-report-only-v13 .report-table th,.technical-report-only-v13 .report-table td{padding:6px 7px}
+.report-signature-page-v9 .report-text-section{margin-top:0}
+.report-signature-grid-v9{gap:20px;margin:8px 0 14px}
+.report-signature-grid-v9.supervisor-grid-v9{max-width:100%}
+.report-signature-card-v9{border:0!important;border-radius:0!important;background:transparent!important;padding:5px 4px!important;min-height:122px!important;box-shadow:none!important}
+.report-signature-image-v9{height:62px!important;border:0!important;border-bottom:1px solid #8f898d!important;border-radius:0!important;background:transparent!important;margin:0 0 6px!important}
+.report-signature-image-v9 img{padding:2px 6px!important}
+.report-signature-note-v9{margin-top:4px;padding:7px 9px;font-size:8px}
+.report-photo-grid-v202{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.report-photo-grid-v202.count-1{grid-template-columns:1fr!important}
+.report-photo-grid-v202 figure{padding:7px!important;border-radius:8px!important}
+.report-photo-grid-v202 .report-photo-media svg{max-height:235px!important}
+.report-photo-grid-v202 figcaption{padding-top:0!important}
+.report-photo-grid-v202 figcaption strong{font-size:9px!important}.report-photo-grid-v202 figcaption span{font-size:8.5px!important;line-height:1.35!important}
+.report-photo-page-v202 .report-standard-note{margin-top:9px;padding:8px 10px}
+
+@media(max-width:1050px){
+  .workflow-compact-v202{grid-template-columns:repeat(5,minmax(115px,1fr))}
+  .current-task-v202{grid-template-columns:145px minmax(0,1fr)}
+  .current-task-v202 .task-body{grid-template-columns:1fr}
+  .quotation-parts-toolbar-v202{grid-template-columns:1fr 1fr}.quotation-parts-toolbar-v202 .form-group{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .workflow-card-v202{padding:13px 12px}.workflow-card-v202 .workflow-title{display:flex;align-items:flex-start;gap:8px}.workflow-card-v202 .workflow-title h2{font-size:15px}.workflow-card-v202 .workflow-title>.badge{margin:0;flex:0 0 auto}
+  .workflow-compact-v202{display:grid;grid-auto-flow:column;grid-auto-columns:142px;grid-template-columns:none;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;scrollbar-width:thin}
+  .workflow-compact-v202 .workflow-step{scroll-snap-align:start;min-height:76px}.workflow-compact-v202 .workflow-step p{display:none}.workflow-compact-v202 .workflow-step-top small{max-width:78px;font-size:6.8px}
+  .current-task-v202{grid-template-columns:1fr}.current-task-v202 .current-team{min-height:0;padding:14px 16px}.current-task-v202 .current-team strong{font-size:17px}.current-task-v202 .task-body{padding:13px}.current-task-v202 .next-team{border-left:0;border-top:3px solid var(--blue-600);border-radius:0 0 10px 10px}.current-task-v202 .task-actions{display:grid;grid-template-columns:1fr}.current-task-v202 .task-actions .btn{width:100%}
+  .quotation-parts-toolbar-v202{grid-template-columns:1fr 1fr;padding:10px}.quotation-parts-toolbar-v202 .form-group{grid-column:1/-1}.budget-parts-readonly-v202 .table{min-width:610px}
+  .budget-workflow-actions-v11.readiness-actions-v202{display:grid!important;grid-template-columns:1fr!important}.budget-workflow-actions-v11.readiness-actions-v202 .btn{width:100%}
+  .modal-backdrop{height:var(--ar7-visible-height-v202);min-height:0;padding:0;align-items:stretch}.modal{width:100%;height:var(--ar7-visible-height-v202);max-height:var(--ar7-visible-height-v202);border-radius:0;display:flex;flex-direction:column}.modal-head{padding:13px 15px}.modal-body{padding:14px 15px;flex:1 1 auto;min-height:0;overflow:auto;scroll-padding-top:70px;scroll-padding-bottom:90px}.modal-foot{padding:10px 15px max(10px,env(safe-area-inset-bottom));background:#fff;position:sticky;bottom:0;z-index:3}.modal-foot .btn{min-height:46px}
+  .form-group:focus-within{scroll-margin-top:82px;scroll-margin-bottom:110px}
+  .technical-report-only-v13 .report-page{padding:24px 22px 48px}
+}
+@media(max-width:440px){
+  .workflow-compact-v202{grid-auto-columns:128px}.workflow-compact-v202 .workflow-step strong{font-size:10px}.workflow-compact-v202 .workflow-step-top small{font-size:6.4px}
+  .quotation-parts-toolbar-v202{grid-template-columns:1fr}.quotation-parts-toolbar-v202 .form-group{grid-column:auto}
+}
+@media print{
+  .technical-report-only-v13 .report-page{padding:11mm 14mm 17mm!important}
+  .technical-report-only-v13 .report-page-header{margin-bottom:3.5mm!important;padding-bottom:2.5mm!important}
+  .technical-report-only-v13 .report-info-grid{gap:2.5mm!important}.technical-report-only-v13 .report-info-grid article{padding:2.5mm 3mm!important}
+  .technical-report-only-v13 .report-text-section{margin-top:3.2mm!important}.technical-report-only-v13 .report-text-section h2,.technical-report-only-v13 .report-section-title{margin-bottom:2mm!important;padding-bottom:1.7mm!important}
+  .technical-report-only-v13 .report-text-section p{font-size:8pt!important;line-height:1.48!important}.technical-report-only-v13 .report-table{margin:2mm 0 3.2mm!important}.technical-report-only-v13 .report-table th,.technical-report-only-v13 .report-table td{padding:1.6mm 1.8mm!important}
+  .report-signature-grid-v9{gap:7mm!important;margin:2mm 0 3mm!important}.report-signature-card-v9{border:0!important;background:transparent!important;padding:1mm!important;min-height:30mm!important}.report-signature-image-v9{height:15mm!important;border:0!important;border-bottom:.3mm solid #8d878b!important;border-radius:0!important;background:transparent!important}.report-signature-note-v9{margin-top:1mm!important;padding:2mm 2.5mm!important}
+  .report-photo-grid-v202{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3mm!important}.report-photo-grid-v202.count-1{grid-template-columns:1fr!important}.report-photo-grid-v202 figure{padding:2mm!important}.report-photo-grid-v202 .report-photo-media svg{max-height:67mm!important}.report-photo-grid-v202 figcaption strong{font-size:7.5pt!important}.report-photo-grid-v202 figcaption span{font-size:6.8pt!important;line-height:1.28!important}.report-photo-page-v202 .report-standard-note{margin-top:2mm!important;padding:2mm 2.5mm!important;font-size:6.5pt!important}
+}
+
+
+/* =========================
+   AR7 V20.2 FINAL — ajustes pedidos para uso real
+   Mantém a paleta atual do projeto; altera somente layout/estado.
+   ========================= */
+
+/* Fluxo guiado no formato stepper/checklist compacto */
+.workflow-card-v202{
+  padding:14px 16px!important;
+  margin-bottom:12px!important;
+  overflow:hidden!important;
+}
+.workflow-card-v202 .workflow-title{
+  margin-bottom:10px!important;
+}
+.workflow-compact-v202{
+  display:grid!important;
+  grid-template-columns:repeat(10,minmax(82px,1fr))!important;
+  gap:0!important;
+  padding:2px 0 4px!important;
+  overflow:visible!important;
+  align-items:start!important;
+}
+.workflow-compact-v202 .workflow-step{
+  appearance:none;
+  -webkit-appearance:none;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  min-width:0!important;
+  min-height:88px!important;
+  margin:0!important;
+  padding:0 6px!important;
+  transform:none!important;
+  position:relative!important;
+  display:grid!important;
+  grid-template-rows:auto auto auto auto!important;
+  justify-items:center!important;
+  align-content:start!important;
+  text-align:center!important;
+  font:inherit!important;
+  color:inherit!important;
+  cursor:pointer!important;
+  opacity:1!important;
+}
+.workflow-compact-v202 .workflow-step::after{
+  display:block!important;
+  content:""!important;
+  position:absolute!important;
+  z-index:0!important;
+  top:16px!important;
+  left:calc(50% + 17px)!important;
+  width:calc(100% - 34px)!important;
+  height:2px!important;
+  background:var(--line)!important;
+}
+.workflow-compact-v202 .workflow-step.done::after{
+  background:#a8d5ba!important;
+}
+.workflow-compact-v202 .workflow-step:last-child::after{
+  display:none!important;
+}
+.workflow-compact-v202 .workflow-step-top{
+  position:relative!important;
+  z-index:1!important;
+  display:grid!important;
+  justify-items:center!important;
+  gap:4px!important;
+  margin:0 0 5px!important;
+}
+.workflow-compact-v202 .workflow-step-top>span{
+  width:32px!important;
+  height:32px!important;
+  border-radius:999px!important;
+  display:grid!important;
+  place-items:center!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  background:#f2f0f2!important;
+  color:#6f696e!important;
+  border:1px solid #d9d5d8!important;
+}
+.workflow-compact-v202 .workflow-step.done .workflow-step-top>span{
+  background:var(--green-600)!important;
+  border-color:var(--green-600)!important;
+  color:#fff!important;
+}
+.workflow-compact-v202 .workflow-step.current .workflow-step-top>span{
+  background:var(--blue-600)!important;
+  border-color:var(--blue-600)!important;
+  color:#fff!important;
+  box-shadow:0 0 0 4px rgba(201,32,47,.08)!important;
+}
+.workflow-compact-v202 .workflow-step-top small{
+  order:2!important;
+  max-width:100%!important;
+  font-size:6.8px!important;
+  line-height:1.1!important;
+  text-align:center!important;
+  letter-spacing:.035em!important;
+  color:var(--muted)!important;
+}
+.workflow-compact-v202 .workflow-step strong{
+  max-width:108px!important;
+  min-height:25px!important;
+  font-size:9.2px!important;
+  line-height:1.25!important;
+  display:grid!important;
+  place-items:start center!important;
+}
+.workflow-compact-v202 .workflow-step p{
+  max-width:105px!important;
+  margin:2px 0 0!important;
+  font-size:7.4px!important;
+  line-height:1.2!important;
+  color:var(--muted)!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+}
+.workflow-compact-v202 .workflow-step.selected-v202:not(.current){
+  background:#faf9fa!important;
+  border-radius:8px!important;
+}
+.workflow-selected-detail-v202{
+  margin-top:8px;
+  min-height:44px;
+  padding:8px 11px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fbfafb;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  column-gap:9px;
+  row-gap:2px;
+  align-items:center;
+}
+.workflow-selected-detail-v202 span{
+  grid-row:1/3;
+  align-self:stretch;
+  display:grid;
+  place-items:center;
+  padding-right:10px;
+  border-right:1px solid var(--line);
+  color:var(--muted);
+  font-size:8px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.workflow-selected-detail-v202 strong{font-size:11px;line-height:1.2}
+.workflow-selected-detail-v202 small{font-size:9px;color:var(--muted);line-height:1.3}
+
+/* Campo ativo sempre acima do teclado virtual */
+.keyboard-open-v202{
+  --ar7-form-safe-bottom-v202:clamp(120px,calc(28px + var(--ar7-keyboard-v202)),340px);
+}
+.keyboard-open-v202 .modal-body{
+  padding-bottom:var(--ar7-form-safe-bottom-v202)!important;
+  scroll-padding-bottom:var(--ar7-form-safe-bottom-v202)!important;
+}
+.keyboard-open-v202 .page{
+  padding-bottom:var(--ar7-form-safe-bottom-v202)!important;
+}
+.keyboard-open-v202 .modal-foot{
+  bottom:0!important;
+  box-shadow:0 -8px 22px rgba(27,24,27,.08);
+}
+.keyboard-open-v202 input:focus,
+.keyboard-open-v202 select:focus,
+.keyboard-open-v202 textarea:focus{
+  scroll-margin-top:82px!important;
+  scroll-margin-bottom:calc(var(--ar7-form-safe-bottom-v202) + 24px)!important;
+}
+textarea.auto-grow-v202,
+.modal textarea{
+  resize:vertical;
+}
+
+/* Fotos do relatório: quatro evidências iguais lado a lado */
+.report-photo-grid-v202{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:8px!important;
+  align-items:start!important;
+}
+.report-photo-grid-v202.count-1{grid-template-columns:minmax(0,1fr)!important;max-width:48%!important}
+.report-photo-grid-v202.count-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.report-photo-grid-v202.count-3{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.report-photo-grid-v202 figure{
+  padding:5px!important;
+  border-radius:7px!important;
+  min-width:0!important;
+}
+.report-photo-grid-v202 .report-photo-media{
+  width:100%!important;
+  aspect-ratio:4/3!important;
+  min-height:0!important;
+  display:grid!important;
+  place-items:center!important;
+  overflow:hidden!important;
+}
+.report-photo-grid-v202 .report-photo-media svg{
+  width:100%!important;
+  height:100%!important;
+  max-height:none!important;
+}
+.report-photo-stage-v202{
+  display:block;
+  margin:0 0 4px;
+  color:var(--muted);
+  font-size:6.8px;
+  line-height:1.2;
+  text-transform:uppercase;
+  letter-spacing:.045em;
+  font-weight:850;
+}
+.report-photo-grid-v202 figcaption{
+  margin:4px 1px 0!important;
+  gap:2px!important;
+  min-height:40px;
+}
+.report-photo-grid-v202 figcaption strong{font-size:8px!important;line-height:1.25!important}
+.report-photo-grid-v202 figcaption span{font-size:7.1px!important;line-height:1.28!important}
+.report-photo-page-v202 .report-standard-note{
+  margin-top:7px!important;
+  padding:6px 8px!important;
+  font-size:7.4px!important;
+}
+
+/* Assinaturas no PDF sem caixa/contorno */
+.report-signature-card-v9{
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  padding:3px 2px!important;
+  min-height:105px!important;
+}
+.report-signature-image-v9{
+  height:58px!important;
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  margin:0 0 4px!important;
+}
+.report-signature-image-v9 img{padding:0!important}
+.report-signature-grid-v9{gap:14px!important;margin:6px 0 10px!important}
+.report-signature-note-v9{margin-top:2px!important;padding:5px 7px!important}
+
+/* Tablet: stepper por toque, sem rolagem vertical dentro do fluxo */
+@media(max-width:1150px){
+  .workflow-compact-v202{
+    display:grid!important;
+    grid-auto-flow:column!important;
+    grid-auto-columns:118px!important;
+    grid-template-columns:none!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scroll-snap-type:x mandatory!important;
+    overscroll-behavior-inline:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+    padding:2px 2px 7px!important;
+  }
+  .workflow-compact-v202 .workflow-step{
+    scroll-snap-align:start!important;
+    min-height:82px!important;
+  }
+  .workflow-compact-v202 .workflow-step::after{
+    width:84px!important;
+    left:76px!important;
+  }
+}
+
+/* Celular: modal ocupa a tela útil e mantém ações acessíveis */
+@media(max-width:760px){
+  .workflow-card-v202{padding:11px 10px!important}
+  .workflow-compact-v202{grid-auto-columns:108px!important}
+  .workflow-compact-v202 .workflow-step{padding:0 4px!important}
+  .workflow-compact-v202 .workflow-step p{display:none!important}
+  .workflow-compact-v202 .workflow-step::after{width:75px!important;left:70px!important}
+  .workflow-selected-detail-v202{
+    grid-template-columns:1fr;
+    padding:8px 9px;
+  }
+  .workflow-selected-detail-v202 span{
+    grid-row:auto;
+    border-right:0;
+    border-bottom:1px solid var(--line);
+    padding:0 0 5px;
+    place-items:start;
+  }
+  .modal-backdrop{
+    inset:0!important;
+    height:var(--ar7-visible-height-v202)!important;
+    min-height:0!important;
+    padding:0!important;
+    align-items:stretch!important;
+  }
+  .modal{
+    width:100%!important;
+    height:var(--ar7-visible-height-v202)!important;
+    max-height:var(--ar7-visible-height-v202)!important;
+    border-radius:0!important;
+  }
+  .modal-body{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  .modal-head,.modal-foot{flex:0 0 auto!important}
+  .report-photo-grid-v202{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .report-photo-grid-v202.count-1{max-width:none!important}
+}
+
+@media(max-width:440px){
+  .workflow-compact-v202{grid-auto-columns:102px!important}
+  .workflow-compact-v202 .workflow-step::after{width:69px!important;left:67px!important}
+  .report-photo-grid-v202{grid-template-columns:1fr!important}
+}
+
+/* Impressão: quatro fotos por linha, sem contorno de assinatura */
+@media print{
+  .report-photo-grid-v202{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:2.3mm!important;
+  }
+  .report-photo-grid-v202.count-1{grid-template-columns:1fr!important;max-width:47%!important}
+  .report-photo-grid-v202.count-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .report-photo-grid-v202.count-3{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .report-photo-grid-v202 figure{padding:1.3mm!important}
+  .report-photo-grid-v202 .report-photo-media{aspect-ratio:4/3!important}
+  .report-photo-grid-v202 .report-photo-media svg{width:100%!important;height:100%!important;max-height:none!important}
+  .report-photo-stage-v202{font-size:5.5pt!important;margin-bottom:1mm!important}
+  .report-photo-grid-v202 figcaption{margin-top:1mm!important;min-height:11mm!important}
+  .report-photo-grid-v202 figcaption strong{font-size:6.3pt!important;line-height:1.2!important}
+  .report-photo-grid-v202 figcaption span{font-size:5.6pt!important;line-height:1.2!important}
+  .report-photo-page-v202 .report-standard-note{margin-top:1.8mm!important;padding:1.6mm 2mm!important;font-size:5.8pt!important}
+  .report-signature-card-v9,
+  .report-signature-image-v9{
+    border:0!important;
+    outline:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+  }
+  .report-signature-image-v9{height:14mm!important}
+  .report-signature-grid-v9{gap:5mm!important;margin:1.5mm 0 2.5mm!important}
+  .report-signature-card-v9{padding:.5mm!important;min-height:26mm!important}
+}

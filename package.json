@@ -1,8 +1,8 @@
 {
   "name": "ar7-gestao-oficina",
-  "version": "20.1.0",
+  "version": "20.2.0",
   "private": true,
-  "description": "Gestão de oficina AR7 com sincronização central PostgreSQL para múltiplos dispositivos.",
+  "description": "AR7 Gestão da Oficina V20.2 — banco central, UX tablet/celular, orçamento separado, fluxo de prontidão e relatório otimizado.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -17,7 +17,7 @@ function stop(child){if(!child||child.killed)return;child.kill('SIGTERM');setTim
 
 (async()=>{
   const app=read('app.js'),css=read('styles.css'),server=read('server.js'),pkg=JSON.parse(read('package.json'));
-  check('app.js preparado para V20',app.includes('AR7 V20')&&app.includes('const APP_VERSION = 20'));
+  check('app.js preparado para V20.2',app.includes('AR7 V20.2')&&app.includes('const APP_VERSION = 20.2'));
   check('sincronização remota V20 existe',app.includes('initRemoteSyncV20')&&app.includes("fetchV20('/api/state'")&&app.includes('scheduleRemoteSaveV20'));
   check('login multi-dispositivo existe',app.includes('loginOverlayV20')&&server.includes('/api/auth/login')&&server.includes('ar7_session'));
   check('API de estado central existe',server.includes("'/api/state'")&&server.includes('ar7_app_state')&&server.includes('jsonb'));
@@ -27,14 +27,22 @@ function stop(child){if(!child||child.killed)return;child.kill('SIGTERM');setTim
   check('fotos grandes sao compactadas automaticamente',app.includes('PHOTO_MAX_SOURCE_BYTES_V201=35*1024*1024')&&app.includes('PHOTO_TARGET_BYTES_V201=420*1024')&&app.includes('canvasDataUrlV201'));
   check('limite antigo de 4 MB foi removido',!app.includes('4_000_000')&&!app.includes('excede 4 MB'));
   check('sincronizacao remota nao depende do limite do localStorage',app.includes('if(remoteInitialSyncDoneV20)scheduleRemoteSaveV20()')&&app.includes('Cache local cheio; dados continuam disponíveis pelo banco central.'));
-  check('package start correto',pkg.scripts?.start==='node server.js'&&pkg.version==='20.1.0');
-  check('healthcheck informa banco central',server.includes('databaseConnected')&&server.includes("version:'20.1.0'"));
+  check('etapas comerciais renomeadas e separadas',app.includes("label:'Peças do orçamento'")&&app.includes("label:'Revisão da proposta'"));
+  check('primeira etapa comercial sem frete/mao de obra/desconto',app.includes('quotation-parts-only-v202')&&app.includes('Frete, mão de obra, terceiros, tributos, desconto')&&app.includes('quotationTotalsV11=function(order)')&&app.includes('return {partsCost,laborCost:0,thirdPartyCost:0,otherCost:0,totalCost:partsCost}'));
+  check('valores comerciais concentrados na revisão',app.includes('commercial-values-v202')&&app.includes('budget-freight-v11')&&app.includes('budget-discount-v11')&&app.includes('budget-tax-v11'));
+  check('botoes de fluxo e compra usam prontidao verde',app.includes('partAdvanceReadyV202')&&app.includes("ready?'btn-success':'btn-light readiness-pending-v202'")&&app.includes('Pronto: confirmar instalação'));
+  check('fluxo guiado compacto e selecionavel',app.includes('workflow-selected-detail-v202')&&css.includes('grid-template-columns:repeat(10,minmax(82px,1fr))')&&css.includes('scroll-snap-type:x mandatory'));
+  check('teclado virtual usa VisualViewport e margem dinamica',app.includes('window.visualViewport')&&app.includes('scrollContainerForV202')&&css.includes('--ar7-form-safe-bottom-v202'));
+  check('relatorio consolida fotos quatro por pagina',app.includes('consolidatedReportPhotosV202')&&app.includes('index+=4')&&css.includes('grid-template-columns:repeat(4,minmax(0,1fr))'));
+  check('assinaturas do relatorio sem contorno',css.includes('.report-signature-card-v9')&&css.includes('border:0!important')&&css.includes('.report-signature-image-v9'));
+  check('package start correto',pkg.scripts?.start==='node server.js'&&pkg.version==='20.2.0');
+  check('healthcheck informa banco central',server.includes('databaseConnected')&&server.includes("version:'20.2.0'"));
 
   const base=await freePair();
   const first=spawn(process.execPath,['server.js',String(base)],{cwd:root,stdio:'ignore'});
   const firstHealth=await waitProbe(base);
   let payload={};try{payload=JSON.parse(firstHealth.body||'{}');}catch{}
-  check('servidor local V20 inicia sem DATABASE_URL',firstHealth.ok&&payload.version==='20.1.0'&&payload.databaseConfigured===false);
+  check('servidor local V20.2 inicia sem DATABASE_URL',firstHealth.ok&&payload.version==='20.2.0'&&payload.databaseConfigured===false);
   const fallback=spawn(process.execPath,['server.js',String(base),'--auto-port'],{cwd:root,stdio:'ignore'});
   const fallbackHealth=await waitProbe(base+1);
   check('porta local ocupada muda automaticamente',fallbackHealth.ok);

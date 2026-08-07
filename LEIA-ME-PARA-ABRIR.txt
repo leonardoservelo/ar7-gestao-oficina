@@ -1,4 +1,4 @@
-AR7 GESTAO DA OFICINA V20
+AR7 GESTAO DA OFICINA V20.2
 
 WINDOWS
 1. Extraia todo o ZIP.
@@ -6,9 +6,11 @@ WINDOWS
 3. Execute INICIAR.bat.
 4. O navegador abre automaticamente.
 
-A V20 procura outra porta automaticamente caso 8108 esteja ocupada.
+A V20.2 procura outra porta automaticamente caso 8108 esteja ocupada.
 Mantenha a janela preta aberta enquanto estiver usando o sistema local.
 
-GITHUB / RAILWAY
-O pacote ja contem package.json, railway.toml, Procfile, .gitignore e workflow de CI.
-Veja README-GITHUB-RAILWAY.md.
+IMPORTANTE
+- A identidade visual e as cores atuais da AR7 foram preservadas.
+- Banco central PostgreSQL, login e sincronizacao multi-dispositivo foram mantidos.
+- Camera e Galeria continuam separadas e fotos grandes continuam sendo compactadas.
+- O deploy com banco central exige DATABASE_URL e as variaveis de autenticacao descritas no README.md.

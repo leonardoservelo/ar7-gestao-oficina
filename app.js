@@ -2,7 +2,7 @@
   'use strict';
 
   const DB_KEY = 'ar7-oficina-db-v2';
-  const APP_VERSION = 20;
+  const APP_VERSION = 20.2;
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -1069,7 +1069,7 @@
   function reportDetailView(orderId) {
     const order=getOrder(orderId);if(!order)return notFoundView();order.records=order.records||{diagnosis:'',assembly:'',tests:'',conclusion:''};
     const checks=reportChecklist(order),ready=reportReady(order);
-    return shell(`<div class="page">${pageHead('Gerador de Relatório Técnico','Documento completo em páginas, com fotos, setas, peças e medições.',`<button class="btn btn-light" data-action="save-report-data" data-id="${order.id}">${icon('save')} Salvar</button><button class="btn btn-primary" data-action="print-report" data-id="${order.id}">${icon('download')} Gerar / salvar PDF</button>`)}<div class="grid report-layout-v5"><aside class="stack"><section class="card"><div class="card-head"><h2>Finalização do relatório</h2></div><div class="card-body stack"><div class="form-group"><label>Conclusão técnica *</label><textarea class="textarea" id="report-conclusion" placeholder="Conclusão final, condição do equipamento e recomendações...">${safe(order.records.conclusion||'')}</textarea></div><div class="form-group"><label>Destinatário</label><input class="input" id="report-recipient" type="email" value="${safe(order.report.recipient||'')}"></div><div class="form-group"><label>Supervisor</label><input class="input" id="report-supervisor" value="${safe(order.supervisor||'')}"></div></div></section><section class="card"><div class="card-head"><h2>Checklist de qualidade</h2></div><div class="card-body alert-list">${checks.map(c=>`<div class="alert-item"><div class="alert-icon ${c.ok?'tone-blue':'tone-red'}">${icon(c.ok?'check':'alert',16)}</div><div><strong>${safe(c.label)}</strong><p>${safe(c.detail)}</p></div></div>`).join('')}</div></section><section class="card"><div class="card-body stack"><button class="btn btn-success" data-action="approve-report" data-id="${order.id}" ${order.report.approved||!ready?'disabled':''}>${icon('check')} ${order.report.approved?'Relatório aprovado':'Aprovar relatório'}</button><button class="btn btn-primary" data-action="send-report" data-id="${order.id}" ${!order.report.approved?'disabled':''}>${icon('send')} Enviar ao cliente</button><div class="form-group"><label>Agendar envio</label><input class="input" type="datetime-local" id="schedule-at" value="${order.report.scheduledAt||''}"><button class="btn btn-light" data-action="schedule-report" data-id="${order.id}" style="width:100%;margin-top:8px">${icon('clock')} Agendar</button></div></div></section></aside><section class="pdf-shell pdf-shell-v5"><div class="pdf-toolbar"><span>${icon('file',17)}</span><span>Relatorio_AR7_OS_${safe(order.number)}.pdf</span><span style="margin-left:auto">${reportPageCount(order)} páginas</span></div>${reportDocumentV5(order)}</section></div></div>`,'reports');
+    return shell(`<div class="page">${pageHead('Gerador de Relatório Técnico','Documento completo em páginas, com fotos, setas, peças e medições.',`<button class="btn btn-light" data-action="save-report-data" data-id="${order.id}">${icon('save')} Salvar</button><button class="btn btn-primary" data-action="print-report" data-id="${order.id}">${icon('download')} Gerar / salvar PDF</button>`)}<div class="grid report-layout-v5"><aside class="stack"><section class="card"><div class="card-head"><h2>Finalização do relatório</h2></div><div class="card-body stack"><div class="form-group"><label>Conclusão técnica *</label><textarea class="textarea" id="report-conclusion" placeholder="Conclusão final, condição do equipamento e recomendações...">${safe(order.records.conclusion||'')}</textarea></div><div class="form-group"><label>Destinatário</label><input class="input" id="report-recipient" type="email" value="${safe(order.report.recipient||'')}"></div><div class="form-group"><label>Supervisor</label><input class="input" id="report-supervisor" value="${safe(order.supervisor||'')}"></div></div></section><section class="card"><div class="card-head"><h2>Checklist de qualidade</h2></div><div class="card-body alert-list">${checks.map(c=>`<div class="alert-item"><div class="alert-icon ${c.ok?'tone-blue':'tone-red'}">${icon(c.ok?'check':'alert',16)}</div><div><strong>${safe(c.label)}</strong><p>${safe(c.detail)}</p></div></div>`).join('')}</div></section><section class="card"><div class="card-body stack"><button class="btn ${(ready||order.report.approved)?'btn-success':'btn-light readiness-pending-v202'}" data-action="approve-report" data-id="${order.id}" ${order.report.approved||!ready?'disabled':''}>${icon((ready||order.report.approved)?'check':'clock')} ${order.report.approved?'Relatório aprovado':ready?'Pronto: aprovar relatório':'Concluir checklist para aprovar'}</button><button class="btn ${order.report.approved?'btn-success':'btn-light readiness-pending-v202'}" data-action="send-report" data-id="${order.id}" ${!order.report.approved?'disabled':''}>${icon(order.report.approved?'send':'clock')} ${order.report.approved?'Pronto: enviar ao cliente':'Aguardando aprovação do relatório'}</button><div class="form-group"><label>Agendar envio</label><input class="input" type="datetime-local" id="schedule-at" value="${order.report.scheduledAt||''}"><button class="btn btn-light" data-action="schedule-report" data-id="${order.id}" style="width:100%;margin-top:8px">${icon('clock')} Agendar</button></div></div></section></aside><section class="pdf-shell pdf-shell-v5"><div class="pdf-toolbar"><span>${icon('file',17)}</span><span>Relatorio_AR7_OS_${safe(order.number)}.pdf</span><span style="margin-left:auto">${reportPageCount(order)} páginas</span></div>${reportDocumentV5(order)}</section></div></div>`,'reports');
   }
 
   function saveReportData(orderId,notify=true){const order=getOrder(orderId);if(!order)return;order.records=order.records||{};order.records.conclusion=(document.getElementById('report-conclusion')?.value||order.records.conclusion||'').trim();order.report.recipient=(document.getElementById('report-recipient')?.value||order.report.recipient||'').trim();order.supervisor=(document.getElementById('report-supervisor')?.value||order.supervisor||'').trim();saveDB();if(notify){render();toast('Dados do relatório salvos.');}}
@@ -1329,7 +1329,7 @@
   function reportDetailView(orderId) {
     const order=getOrder(orderId);if(!order)return notFoundView();order.records=order.records||{diagnosis:'',assembly:'',tests:'',conclusion:'',recommendations:''};
     const checks=reportChecklist(order),ready=reportReady(order),texts=professionalReportTextV7(order);
-    return shell(`<div class="page report-generator-page">${pageHead('Gerador de Relatório Técnico','Revise o conteúdo, aplique textos profissionais e confira as imagens antes de salvar o PDF.',`<button class="btn btn-light" data-action="apply-report-template" data-id="${order.id}">${icon('file')} Aplicar textos padrão</button><button class="btn btn-light" data-action="save-report-data" data-id="${order.id}">${icon('save')} Salvar</button><button class="btn btn-primary" data-action="print-report" data-id="${order.id}">${icon('download')} Gerar / salvar PDF</button>`)}<div class="grid report-layout-v5"><aside class="stack report-editor-panel"><section class="card"><div class="card-head"><div><h2>Conteúdo final</h2><p>Os textos padrão podem ser ajustados conforme o serviço realizado.</p></div></div><div class="card-body stack"><div class="form-group"><label>Conclusão técnica *</label><textarea class="textarea report-editor-text" id="report-conclusion" placeholder="Conclusão final, condição do equipamento e liberação...">${safe(order.records.conclusion||'')}</textarea><small>Sugestão: ${safe(texts.conclusion)}</small></div><div class="form-group"><label>Recomendações</label><textarea class="textarea" id="report-recommendations" placeholder="Inspeção preventiva, acompanhamento de parâmetros e cuidados operacionais...">${safe(order.records.recommendations||'')}</textarea></div><div class="form-group"><label>Destinatário</label><input class="input" id="report-recipient" type="email" value="${safe(order.report.recipient||'')}"></div><div class="form-group"><label>Supervisor</label><input class="input" id="report-supervisor" value="${safe(order.supervisor||'')}"></div></div></section><section class="card"><div class="card-head"><h2>Checklist de qualidade</h2></div><div class="card-body alert-list">${checks.map(c=>`<div class="alert-item"><div class="alert-icon ${c.ok?'tone-blue':'tone-red'}">${icon(c.ok?'check':'alert',16)}</div><div><strong>${safe(c.label)}</strong><p>${safe(c.detail)}</p></div></div>`).join('')}</div></section><section class="card"><div class="card-body stack"><button class="btn btn-success" data-action="approve-report" data-id="${order.id}" ${order.report.approved||!ready?'disabled':''}>${icon('check')} ${order.report.approved?'Relatório aprovado':'Aprovar relatório'}</button><button class="btn btn-primary" data-action="send-report" data-id="${order.id}" ${!order.report.approved?'disabled':''}>${icon('send')} Enviar ao cliente</button><div class="form-group"><label>Agendar envio</label><input class="input" type="datetime-local" id="schedule-at" value="${order.report.scheduledAt||''}"><button class="btn btn-light" data-action="schedule-report" data-id="${order.id}">${icon('clock')} Agendar</button></div></div></section></aside><section class="pdf-shell pdf-shell-v5" data-preserve-scroll="report-preview"><div class="pdf-toolbar"><span>${icon('file',17)}</span><span>Relatorio_AR7_OS_${safe(order.number)}.pdf</span><span class="pdf-toolbar-meta">${reportPageCount(order)} páginas · imagens ajustadas</span></div>${reportDocumentV5(order)}</section></div></div>`,'reports');
+    return shell(`<div class="page report-generator-page">${pageHead('Gerador de Relatório Técnico','Revise o conteúdo, aplique textos profissionais e confira as imagens antes de salvar o PDF.',`<button class="btn btn-light" data-action="apply-report-template" data-id="${order.id}">${icon('file')} Aplicar textos padrão</button><button class="btn btn-light" data-action="save-report-data" data-id="${order.id}">${icon('save')} Salvar</button><button class="btn btn-primary" data-action="print-report" data-id="${order.id}">${icon('download')} Gerar / salvar PDF</button>`)}<div class="grid report-layout-v5"><aside class="stack report-editor-panel"><section class="card"><div class="card-head"><div><h2>Conteúdo final</h2><p>Os textos padrão podem ser ajustados conforme o serviço realizado.</p></div></div><div class="card-body stack"><div class="form-group"><label>Conclusão técnica *</label><textarea class="textarea report-editor-text" id="report-conclusion" placeholder="Conclusão final, condição do equipamento e liberação...">${safe(order.records.conclusion||'')}</textarea><small>Sugestão: ${safe(texts.conclusion)}</small></div><div class="form-group"><label>Recomendações</label><textarea class="textarea" id="report-recommendations" placeholder="Inspeção preventiva, acompanhamento de parâmetros e cuidados operacionais...">${safe(order.records.recommendations||'')}</textarea></div><div class="form-group"><label>Destinatário</label><input class="input" id="report-recipient" type="email" value="${safe(order.report.recipient||'')}"></div><div class="form-group"><label>Supervisor</label><input class="input" id="report-supervisor" value="${safe(order.supervisor||'')}"></div></div></section><section class="card"><div class="card-head"><h2>Checklist de qualidade</h2></div><div class="card-body alert-list">${checks.map(c=>`<div class="alert-item"><div class="alert-icon ${c.ok?'tone-blue':'tone-red'}">${icon(c.ok?'check':'alert',16)}</div><div><strong>${safe(c.label)}</strong><p>${safe(c.detail)}</p></div></div>`).join('')}</div></section><section class="card"><div class="card-body stack"><button class="btn ${(ready||order.report.approved)?'btn-success':'btn-light readiness-pending-v202'}" data-action="approve-report" data-id="${order.id}" ${order.report.approved||!ready?'disabled':''}>${icon((ready||order.report.approved)?'check':'clock')} ${order.report.approved?'Relatório aprovado':ready?'Pronto: aprovar relatório':'Concluir checklist para aprovar'}</button><button class="btn ${order.report.approved?'btn-success':'btn-light readiness-pending-v202'}" data-action="send-report" data-id="${order.id}" ${!order.report.approved?'disabled':''}>${icon(order.report.approved?'send':'clock')} ${order.report.approved?'Pronto: enviar ao cliente':'Aguardando aprovação do relatório'}</button><div class="form-group"><label>Agendar envio</label><input class="input" type="datetime-local" id="schedule-at" value="${order.report.scheduledAt||''}"><button class="btn btn-light" data-action="schedule-report" data-id="${order.id}">${icon('clock')} Agendar</button></div></div></section></aside><section class="pdf-shell pdf-shell-v5" data-preserve-scroll="report-preview"><div class="pdf-toolbar"><span>${icon('file',17)}</span><span>Relatorio_AR7_OS_${safe(order.number)}.pdf</span><span class="pdf-toolbar-meta">${reportPageCount(order)} páginas · imagens ajustadas</span></div>${reportDocumentV5(order)}</section></div></div>`,'reports');
   }
 
   function saveReportData(orderId,notify=true){const order=getOrder(orderId);if(!order)return;order.records=order.records||{};order.records.conclusion=(document.getElementById('report-conclusion')?.value??order.records.conclusion??'').trim();order.records.recommendations=(document.getElementById('report-recommendations')?.value??order.records.recommendations??'').trim();order.report.recipient=(document.getElementById('report-recipient')?.value??order.report.recipient??'').trim();order.supervisor=(document.getElementById('report-supervisor')?.value??order.supervisor??'').trim();saveDB();if(notify){render();toast('Dados do relatório salvos sem alterar sua posição na página.');}}
@@ -1672,7 +1672,7 @@
     const order=getOrder(orderId);if(!order)return notFoundView();order.records=order.records||{diagnosis:'',assembly:'',tests:'',conclusion:'',recommendations:''};
     const checks=reportChecklist(order),ready=reportReady(order),texts=professionalReportTextV7(order),signatures=ensureSignaturesV9(order);
     const techList=signatures.technicians.map(item=>signaturePreviewV9(item,true)).join('')||'<div class="signature-empty-inline-v9">Nenhum técnico assinou a montagem.</div>';
-    return shell(`<div class="page report-generator-page">${pageHead('Gerador de Relatório Técnico','Revise o conteúdo, confira a capa e conclua as assinaturas antes de aprovar.',`<button class="btn btn-light" data-action="apply-report-template" data-id="${order.id}">${icon('file')} Aplicar textos padrão</button><button class="btn btn-light" data-action="save-report-data" data-id="${order.id}">${icon('save')} Salvar</button><button class="btn btn-primary" data-action="print-report" data-id="${order.id}">${icon('download')} Gerar / salvar PDF</button>`)}<div class="grid report-layout-v5"><aside class="stack report-editor-panel"><section class="card"><div class="card-head"><div><h2>Conteúdo final</h2><p>Revise os textos antes da aprovação.</p></div></div><div class="card-body stack"><div class="form-group"><label>Conclusão técnica *</label><textarea class="textarea report-editor-text" id="report-conclusion" placeholder="Conclusão final, condição do equipamento e liberação...">${safe(order.records.conclusion||'')}</textarea><small>Sugestão: ${safe(texts.conclusion)}</small></div><div class="form-group"><label>Recomendações</label><textarea class="textarea" id="report-recommendations" placeholder="Recomendações preventivas e operacionais...">${safe(order.records.recommendations||'')}</textarea></div><div class="form-group"><label>Destinatário</label><input class="input" id="report-recipient" type="email" value="${safe(order.report.recipient||'')}"></div></div></section><section class="card"><div class="card-head"><div><h2>Assinaturas</h2><p>Mesmo padrão visual usado no EngiLaudos: assinatura desenhada, não nome digitado.</p></div></div><div class="card-body stack"><div><div class="section-eyebrow">TÉCNICOS DE MONTAGEM</div><div class="signature-list-inline-v9">${techList}</div></div><div><div class="section-eyebrow">SUPERVISOR</div>${signaturePreviewV9(signatures.supervisor,true)}<button class="btn btn-primary" data-action="sign-supervisor-v9" data-order="${order.id}">${icon('edit')} ${signatures.supervisor.image?'Refazer assinatura do supervisor':'Assinar como supervisor'}</button></div></div></section><section class="card"><div class="card-head"><h2>Checklist de qualidade</h2></div><div class="card-body alert-list">${checks.map(c=>`<div class="alert-item"><div class="alert-icon ${c.ok?'tone-blue':'tone-red'}">${icon(c.ok?'check':'alert',16)}</div><div><strong>${safe(c.label)}</strong><p>${safe(c.detail)}</p></div></div>`).join('')}</div></section><section class="card"><div class="card-body stack"><button class="btn btn-success" data-action="approve-report" data-id="${order.id}" ${order.report.approved||!ready?'disabled':''}>${icon('check')} ${order.report.approved?'Relatório aprovado':'Aprovar relatório'}</button><button class="btn btn-primary" data-action="send-report" data-id="${order.id}" ${!order.report.approved?'disabled':''}>${icon('send')} Enviar ao cliente</button><div class="form-group"><label>Agendar envio</label><input class="input" type="datetime-local" id="schedule-at" value="${order.report.scheduledAt||''}"><button class="btn btn-light" data-action="schedule-report" data-id="${order.id}">${icon('clock')} Agendar</button></div></div></section></aside><section class="pdf-shell pdf-shell-v5" data-preserve-scroll="report-preview"><div class="pdf-toolbar"><span>${icon('file',17)}</span><span>Relatorio_AR7_OS_${safe(order.number)}.pdf</span><span class="pdf-toolbar-meta">${reportPageCount(order)} páginas · capa V10 · assinaturas visuais</span></div>${reportDocumentV5(order)}</section></div></div>`,'reports');
+    return shell(`<div class="page report-generator-page">${pageHead('Gerador de Relatório Técnico','Revise o conteúdo, confira a capa e conclua as assinaturas antes de aprovar.',`<button class="btn btn-light" data-action="apply-report-template" data-id="${order.id}">${icon('file')} Aplicar textos padrão</button><button class="btn btn-light" data-action="save-report-data" data-id="${order.id}">${icon('save')} Salvar</button><button class="btn btn-primary" data-action="print-report" data-id="${order.id}">${icon('download')} Gerar / salvar PDF</button>`)}<div class="grid report-layout-v5"><aside class="stack report-editor-panel"><section class="card"><div class="card-head"><div><h2>Conteúdo final</h2><p>Revise os textos antes da aprovação.</p></div></div><div class="card-body stack"><div class="form-group"><label>Conclusão técnica *</label><textarea class="textarea report-editor-text" id="report-conclusion" placeholder="Conclusão final, condição do equipamento e liberação...">${safe(order.records.conclusion||'')}</textarea><small>Sugestão: ${safe(texts.conclusion)}</small></div><div class="form-group"><label>Recomendações</label><textarea class="textarea" id="report-recommendations" placeholder="Recomendações preventivas e operacionais...">${safe(order.records.recommendations||'')}</textarea></div><div class="form-group"><label>Destinatário</label><input class="input" id="report-recipient" type="email" value="${safe(order.report.recipient||'')}"></div></div></section><section class="card"><div class="card-head"><div><h2>Assinaturas</h2><p>Mesmo padrão visual usado no EngiLaudos: assinatura desenhada, não nome digitado.</p></div></div><div class="card-body stack"><div><div class="section-eyebrow">TÉCNICOS DE MONTAGEM</div><div class="signature-list-inline-v9">${techList}</div></div><div><div class="section-eyebrow">SUPERVISOR</div>${signaturePreviewV9(signatures.supervisor,true)}<button class="btn btn-primary" data-action="sign-supervisor-v9" data-order="${order.id}">${icon('edit')} ${signatures.supervisor.image?'Refazer assinatura do supervisor':'Assinar como supervisor'}</button></div></div></section><section class="card"><div class="card-head"><h2>Checklist de qualidade</h2></div><div class="card-body alert-list">${checks.map(c=>`<div class="alert-item"><div class="alert-icon ${c.ok?'tone-blue':'tone-red'}">${icon(c.ok?'check':'alert',16)}</div><div><strong>${safe(c.label)}</strong><p>${safe(c.detail)}</p></div></div>`).join('')}</div></section><section class="card"><div class="card-body stack"><button class="btn ${(ready||order.report.approved)?'btn-success':'btn-light readiness-pending-v202'}" data-action="approve-report" data-id="${order.id}" ${order.report.approved||!ready?'disabled':''}>${icon((ready||order.report.approved)?'check':'clock')} ${order.report.approved?'Relatório aprovado':ready?'Pronto: aprovar relatório':'Concluir checklist para aprovar'}</button><button class="btn ${order.report.approved?'btn-success':'btn-light readiness-pending-v202'}" data-action="send-report" data-id="${order.id}" ${!order.report.approved?'disabled':''}>${icon(order.report.approved?'send':'clock')} ${order.report.approved?'Pronto: enviar ao cliente':'Aguardando aprovação do relatório'}</button><div class="form-group"><label>Agendar envio</label><input class="input" type="datetime-local" id="schedule-at" value="${order.report.scheduledAt||''}"><button class="btn btn-light" data-action="schedule-report" data-id="${order.id}">${icon('clock')} Agendar</button></div></div></section></aside><section class="pdf-shell pdf-shell-v5" data-preserve-scroll="report-preview"><div class="pdf-toolbar"><span>${icon('file',17)}</span><span>Relatorio_AR7_OS_${safe(order.number)}.pdf</span><span class="pdf-toolbar-meta">${reportPageCount(order)} páginas · capa V10 · assinaturas visuais</span></div>${reportDocumentV5(order)}</section></div></div>`,'reports');
   };
 
   const handleV8SecurityActionsBeforeV9=handleV8SecurityActions;
@@ -3278,7 +3278,7 @@
     const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local'};
     badge.className=`sync-badge-v20 ${state}`;
     badge.textContent=message||labels[state]||state;
-    badge.title='AR7 V20.1 — sincronização entre dispositivos';
+    badge.title='AR7 V20.2 — sincronização entre dispositivos';
   }
 
   async function fetchV20(url,options={}){
@@ -3378,6 +3378,324 @@
   shell=function(content,route,portal=false,portalClientId=''){
     return shellBeforeV20(content,route,portal,portalClientId).replace(/<small>v19<\/small>/g,'<small>v20.1</small>');
   };
+
+
+  /* =========================
+     AR7 V20.2 — UX mobile, fluxo compacto, orçamento separado e relatório otimizado
+     ========================= */
+  function applyStageNamesV202(){
+    const pieces=STAGES.find(stage=>stage.id==='cotacao');
+    const review=STAGES.find(stage=>stage.id==='orcamento');
+    if(pieces)Object.assign(pieces,{label:'Peças do orçamento',team:'Compras',short:'Cadastrar peças, origem e custo unitário'});
+    if(review)Object.assign(review,{label:'Revisão da proposta',team:'Comercial / Supervisor',short:'Definir valores e condições comerciais'});
+  }
+  applyStageNamesV202();
+
+  function migrateCommercialValuesV202(order){
+    if(!order)return false;
+    const quotation=ensureQuotationV11(order),budget=ensureBudgetV11(order);
+    let changed=false;
+    const transfer=(from,to)=>{
+      if(!String(budget[to]??'').trim()&&String(quotation[from]??'').trim()){budget[to]=quotation[from];changed=true;}
+      if(String(quotation[from]??'').trim()){quotation[from]='';changed=true;}
+    };
+    transfer('laborCost','laborPrice');
+    transfer('thirdPartyCost','thirdPartyPrice');
+    transfer('otherCost','otherPrice');
+    const oldFreight=(order.parts||[]).reduce((sum,part)=>{
+      const quote=selectedQuoteV11(part);return sum+parseNumberV11(quote?.freight);
+    },0);
+    if(oldFreight>0&&!parseNumberV11(budget.freightPrice)){budget.freightPrice=String(oldFreight);changed=true;}
+    (order.parts||[]).forEach(part=>(part.quotations||[]).forEach(quote=>{if(parseNumberV11(quote.freight)){quote.freight='';changed=true;}}));
+    return changed;
+  }
+
+  function budgetReadyForReviewV202(order){
+    const budget=ensureBudgetV11(order),totals=budgetTotalsV11(order),chargeRequired=budget.billingType==='Normal';
+    return Boolean(budget.technicalScope?.trim().length>=20&&(!chargeRequired||totals.total>0)&&budget.paymentTerms?.trim()&&budget.warranty?.trim()&&budget.validUntil&&budget.recipient?.includes('@'));
+  }
+
+  function partAdvanceReadyV202(order,part){
+    const next=purchaseNextStatusV8(part?.status||'');
+    if(!next)return false;
+    if(next==='Comprada'){
+      const selected=selectedQuoteV11(part);
+      const supplyReady=Boolean(partSupplier(part))||quoteIsValidV11(selected);
+      return approvalGrantedV10(order)&&supplyReady;
+    }
+    if(next==='Recebida')return part.status==='Comprada';
+    if(next==='Separada')return part.status==='Recebida'&&Boolean(partLocation(part)||part.purchase?.location);
+    return true;
+  }
+
+  collectQuotationV11=function(order){
+    const quotation=ensureQuotationV11(order),read=(field,current='')=>document.getElementById(field)?.value??current;
+    quotation.responsible=String(read('quotation-responsible-v11',quotation.responsible)).trim();
+    quotation.notes=String(read('quotation-notes-v11',quotation.notes)).trim();
+    const parts=order.parts||[];
+    quotation.status=parts.length&&parts.every(part=>quoteIsValidV11(selectedQuoteV11(part)))?QUOTATION_STATUS_V11.COMPLETE:QUOTATION_STATUS_V11.IN_PROGRESS;
+    if(quotation.status===QUOTATION_STATUS_V11.COMPLETE&&!quotation.completedAt)quotation.completedAt=new Date().toISOString();
+    return quotation;
+  };
+
+  quotationTotalsV11=function(order){
+    ensureQuotationV11(order);
+    const partsCost=(order.parts||[]).reduce((sum,part)=>sum+selectedQuoteCostV11(part),0);
+    return {partsCost,laborCost:0,thirdPartyCost:0,otherCost:0,totalCost:partsCost};
+  };
+
+  // V20.2: a primeira etapa comercial registra somente a peça e seu valor unitário.
+  // Frete/logística e demais acréscimos ficam exclusivamente na revisão da proposta.
+  selectedQuoteCostV11=function(part){
+    const quote=selectedQuoteV11(part);
+    if(!quote||quote.source==='Fornecida pelo cliente')return 0;
+    return parseNumberV11(quote.unitPrice)*quantityNumberV11(part);
+  };
+
+  openSupplierQuoteModalV11=function(orderId,partId,quoteId=''){
+    const order=getOrder(orderId),part=order?.parts.find(item=>item.id===partId);if(!part)return;
+    const quote=quoteId?(part.quotations||[]).find(item=>item.id===quoteId):normalizeSupplierQuoteV11({source:'Fornecedor'});if(!quote)return;
+    openModal(quoteId?'Editar peça / opção de fornecimento':'Nova peça / opção de fornecimento',`<form id="supplier-quote-form-v11" class="form-grid"><input type="hidden" name="orderId" value="${safe(orderId)}"><input type="hidden" name="partId" value="${safe(partId)}"><input type="hidden" name="quoteId" value="${safe(quoteId)}"><div class="technical-callout span-2"><span>${icon('gear',20)}</span><div><strong>${safe(part.name)}</strong>${safe(part.code||'Sem código')} · ${safe(part.dimensions||'Sem medidas')} · ${safe(partQuantity(part))}</div></div><div class="form-group"><label>Origem da peça *</label><select class="select" name="source">${QUOTE_SOURCES_V11.map(source=>`<option ${quote.source===source?'selected':''}>${safe(source)}</option>`).join('')}</select></div><div class="form-group"><label>Fornecedor</label><input class="input" name="supplier" value="${safe(quote.supplier)}" placeholder="Obrigatório para compra externa"></div><div class="form-group"><label>Marca / fabricante</label><input class="input" name="brand" value="${safe(quote.brand)}"></div><div class="form-group"><label>Valor unitário da peça</label><input class="input" name="unitPrice" inputmode="decimal" value="${safe(quote.unitPrice)}" placeholder="0,00"></div><div class="form-group"><label>Previsão de entrega</label><input class="input" type="date" name="expectedDate" value="${safe(quote.expectedDate)}"></div><div class="form-group"><label>Nº da cotação</label><input class="input" name="quoteNumber" value="${safe(quote.quoteNumber)}"></div><div class="form-group span-2"><label>Local no estoque</label><input class="input" name="stockLocation" value="${safe(quote.stockLocation)}" placeholder="Obrigatório somente para estoque próprio"></div><div class="form-group span-2"><label>Observação da peça</label><textarea class="textarea auto-grow-v202" name="note">${safe(quote.note)}</textarea></div><div class="commercial-field-redirect-v202 span-2">Frete, mão de obra, terceiros, tributos, desconto e demais valores comerciais são definidos somente na etapa <strong>Revisar proposta</strong>.</div></form>`,`<button class="btn btn-light" data-action="close-modal">Cancelar</button><button class="btn btn-primary" data-action="save-supplier-quote-v11">${icon('save')} Salvar peça</button>`);
+  };
+
+  quotationCardsV11=function(order){
+    return (order.parts||[]).map(part=>{
+      const quotes=part.quotations||[],selected=selectedQuoteV11(part);
+      const quoteRows=quotes.map(quote=>`<article class="supplier-quote-v11 ${quote.selected?'selected':''}"><div class="supplier-quote-main-v11"><div><span>${safe(quote.source)}</span><strong>${safe(quote.source==='Fornecedor'?quote.supplier:quote.source)}</strong><small>${quote.brand?safe(quote.brand):'Marca não informada'}${quote.quoteNumber?` · Cotação ${safe(quote.quoteNumber)}`:''}</small></div><div class="quote-price-v11"><strong>${moneyV11(parseNumberV11(quote.unitPrice)*quantityNumberV11(part))}</strong><small>${quote.source==='Fornecedor'?`${moneyV11(quote.unitPrice)} / ${safe(part.unit||'un')}`:quote.source}</small></div></div><div class="supplier-quote-meta-v11"><span>${quote.expectedDate?`Previsão da peça: ${formatDate(quote.expectedDate)}`:'Prazo da peça não informado'}</span><span>${quote.stockLocation?`Estoque: ${safe(quote.stockLocation)}`:' '}</span></div><div class="row-actions"><button class="btn btn-light btn-sm" data-action="edit-supplier-quote-v11" data-order="${order.id}" data-part="${part.id}" data-quote="${quote.id}">${icon('edit',14)} Editar peça</button>${quote.selected?`<span class="selected-quote-label-v11">${icon('check',14)} Selecionada</span>`:`<button class="btn btn-primary btn-sm" data-action="select-supplier-quote-v11" data-order="${order.id}" data-part="${part.id}" data-quote="${quote.id}">Selecionar peça</button>`}<button class="icon-danger" data-action="remove-supplier-quote-v11" data-order="${order.id}" data-part="${part.id}" data-quote="${quote.id}" aria-label="Excluir opção">${icon('trash',14)}</button></div></article>`).join('');
+      return `<section class="quote-part-card-v11"><div class="quote-part-head-v11"><div><span>${safe(part.position||'Aplicação não informada')}</span><h3>${safe(part.name)}</h3><p>Código: ${safe(part.code||'—')} · Medidas: ${safe(part.dimensions||'—')} · ${safe(partQuantity(part))}</p></div>${selected?badge('Peça definida','green'):badge('Falta definir','red')}</div><div class="supplier-quotes-grid-v11">${quoteRows||'<div class="empty compact"><strong>Nenhuma opção registrada</strong><span>Inclua fornecedor, estoque próprio ou peça fornecida pelo cliente.</span></div>'}</div><button class="btn btn-light btn-sm" data-action="add-supplier-quote-v11" data-order="${order.id}" data-part="${part.id}">${icon('plus',14)} Adicionar opção da peça</button></section>`;
+    }).join('');
+  };
+
+  quotationWorkspaceV11=function(order){
+    migrateCommercialValuesV202(order);
+    const quotation=ensureQuotationV11(order),totals=quotationTotalsV11(order),client=getClient(order.clientId),eq=getEquipment(order.equipmentId),parts=order.parts||[];
+    return `<section class="card stage-workspace quotation-workspace-v11 quotation-parts-only-v202"><div class="card-head"><div><div class="section-eyebrow">PEÇAS PARA O ORÇAMENTO · INTERNO</div><h2>Cadastro, cotação e escolha das peças</h2><p>Nesta primeira parte ficam somente as peças e as opções de fornecimento. Frete comercial, mão de obra, terceiros, tributos e descontos são definidos na revisão da proposta.</p></div>${badge(quotation.status,quotation.status===QUOTATION_STATUS_V11.COMPLETE?'green':'amber')}</div><div class="card-body stack"><div class="commercial-flow-strip-v11"><span class="done">1 Diagnóstico</span><span class="active">2 Peças / cotação</span><span>3 Revisar proposta</span><span>4 Cliente</span><span>5 Compra</span></div><div class="quotation-context-v11"><div><small>OS / Cliente</small><strong>OS #${safe(order.number)} · ${safe(client?.name)}</strong></div><div><small>Equipamento</small><strong>${safe(eq?.tag)} · ${safe(equipmentDescription(eq))}</strong></div><div class="wide"><small>Diagnóstico</small><p>${safe(order.records?.diagnosis||'Não registrado')}</p></div></div><div class="quotation-parts-toolbar-v202"><div><small>PEÇAS CADASTRADAS</small><strong>${parts.length}</strong></div><div><small>CUSTO DAS OPÇÕES SELECIONADAS</small><strong id="quotation-parts-preview-v12">${moneyV11(totals.partsCost)}</strong></div><div class="form-group"><label>Responsável por Compras *</label><input class="input" id="quotation-responsible-v11" value="${safe(quotation.responsible)}" placeholder="Nome do responsável"></div></div>${quotationCardsV11(order)}<div class="quotation-note-v202"><div class="form-group"><label>Observação sobre as peças</label><textarea class="textarea auto-grow-v202" id="quotation-notes-v11" placeholder="Equivalências, indisponibilidade, prazo crítico ou observações da cotação...">${safe(quotation.notes)}</textarea></div></div></div></section>`;
+  };
+
+  const stageRequirementsBeforeV202=stageRequirements;
+  stageRequirements=function(order){
+    if(order.stage==='cotacao'){
+      const quotation=ensureQuotationV11(order),parts=order.parts||[];
+      return [
+        {label:'Responsável por Compras informado',ok:Boolean(quotation.responsible?.trim())},
+        {label:'Todas as peças possuem uma opção de fornecimento válida selecionada',ok:parts.length>0&&parts.every(part=>quoteIsValidV11(selectedQuoteV11(part)))}
+      ];
+    }
+    if(order.stage==='orcamento'){
+      const budget=ensureBudgetV11(order),baseReady=budgetReadyForReviewV202(order);
+      return [
+        {label:'Escopo, valores e condições comerciais preenchidos',ok:baseReady},
+        {label:'Proposta enviada para revisão interna',ok:[BUDGET_STATUS_V11.REVIEW,BUDGET_STATUS_V11.INTERNAL_APPROVED,BUDGET_STATUS_V11.SENT].includes(budget.status)},
+        {label:'Proposta aprovada internamente pelo supervisor',ok:[BUDGET_STATUS_V11.INTERNAL_APPROVED,BUDGET_STATUS_V11.SENT].includes(budget.status)}
+      ];
+    }
+    return stageRequirementsBeforeV202(order);
+  };
+
+  const handoffButtonLabelBeforeV202=handoffButtonLabelV5;
+  handoffButtonLabelV5=function(order){
+    if(order.stage==='cotacao')return 'Peças conferidas: liberar revisão da proposta';
+    if(order.stage==='orcamento')return 'Proposta pronta: enviar ao cliente';
+    return handoffButtonLabelBeforeV202(order);
+  };
+
+  budgetWorkspaceV11=function(order){
+    migrateCommercialValuesV202(order);
+    const budget=ensureBudgetV11(order),totals=budgetTotalsV11(order),quotation=quotationTotalsV11(order),client=getClient(order.clientId),eq=getEquipment(order.equipmentId);
+    const readyForReview=budgetReadyForReviewV202(order),canApprove=budget.status===BUDGET_STATUS_V11.REVIEW,canSend=budget.status===BUDGET_STATUS_V11.INTERNAL_APPROVED;
+    const parts=(order.parts||[]).map(part=>{const quote=selectedQuoteV11(part);return `<tr><td><strong>${safe(part.name)}</strong><small>${safe(part.position||'Aplicação não informada')}</small></td><td>${safe(part.code||'—')}</td><td>${safe(partQuantity(part))}</td><td>${safe(quote?.supplier||quote?.source||'—')}</td><td>${moneyV11(selectedQuoteCostV11(part))}</td></tr>`;}).join('');
+    return `<section class="card stage-workspace budget-workspace-v11 budget-review-v202"><div class="card-head"><div><div class="section-eyebrow">PROPOSTA ${safe(budget.proposalCode)}</div><h2>Revisar proposta e definir valores comerciais</h2><p>As peças chegam prontas da etapa anterior. Aqui ficam todos os valores comerciais, frete, descontos, tributos, prazo e condições que serão apresentados ao cliente.</p></div>${badge(budget.status,budgetStatusToneV11(budget.status))}</div><div class="card-body stack"><div class="commercial-flow-strip-v11"><span class="done">1 Diagnóstico</span><span class="done">2 Peças / cotação</span><span class="active">3 Revisar proposta</span><span>4 Cliente</span><span>5 Compra</span></div><section class="budget-parts-readonly-v202"><div class="stage-photo-head"><div><div class="section-eyebrow">PEÇAS JÁ DEFINIDAS</div><h3>Resumo vindo de Compras</h3><p>Somente consulta nesta tela. Para trocar fornecedor ou peça, volte à etapa de peças/cotação.</p></div><strong>${moneyV11(quotation.partsCost)}</strong></div><div class="table-wrap"><table class="table"><thead><tr><th>Peça</th><th>Código</th><th>Qtd.</th><th>Fornecedor / origem</th><th>Custo selecionado</th></tr></thead><tbody>${parts||'<tr><td colspan="5"><div class="empty compact">Serviço sem peças cadastradas.</div></td></tr>'}</tbody></table></div></section><div class="budget-internal-cost-v11"><div><small>Custo interno das peças</small><strong id="budget-cost-preview-v12">${moneyV11(quotation.partsCost)}</strong><span>Referência interna · não aparece ao cliente</span></div><div><small>Valor de venda calculado</small><strong id="budget-total-preview-v11">${moneyV11(totals.total)}</strong><span id="budget-margin-preview-v12">Margem bruta estimada: ${moneyV11(totals.total-quotation.partsCost)}</span></div></div><div class="budget-editor-layout-v11"><div class="stack"><section class="budget-form-section-v11"><h3>Escopo e enquadramento</h3><div class="form-grid"><div class="form-group"><label>Tipo de atendimento</label><select class="select" id="budget-billing-type-v11">${BILLING_TYPES_V11.map(type=>`<option ${budget.billingType===type?'selected':''}>${safe(type)}</option>`).join('')}</select></div><div class="form-group"><label>Validade da proposta *</label><input class="input" type="date" id="budget-valid-v11" value="${safe(budget.validUntil)}"></div><div class="form-group span-2"><label>Escopo técnico e comercial *</label><textarea class="textarea stage-large-text auto-grow-v202" id="budget-scope-v11">${safe(budget.technicalScope)}</textarea></div></div></section><section class="budget-form-section-v11 commercial-values-v202"><h3>Valores comerciais</h3><p class="section-help-v202">Todos os acréscimos e descontos da proposta ficam concentrados aqui.</p><div class="form-grid"><div class="form-group"><label>Margem nas peças (%)</label><input class="input budget-calc-v11" id="budget-parts-markup-v11" inputmode="decimal" value="${safe(budget.partsMarkup)}"></div><div class="form-group"><label>Mão de obra para o cliente</label><input class="input budget-calc-v11" id="budget-labor-v11" inputmode="decimal" value="${safe(budget.laborPrice)}"></div><div class="form-group"><label>Serviços de terceiros</label><input class="input budget-calc-v11" id="budget-third-party-v11" inputmode="decimal" value="${safe(budget.thirdPartyPrice)}"></div><div class="form-group"><label>Frete / logística</label><input class="input budget-calc-v11" id="budget-freight-v11" inputmode="decimal" value="${safe(budget.freightPrice)}"></div><div class="form-group"><label>Outros valores</label><input class="input budget-calc-v11" id="budget-other-v11" inputmode="decimal" value="${safe(budget.otherPrice)}"></div><div class="form-group"><label>Tributos (%)</label><input class="input budget-calc-v11" id="budget-tax-v11" inputmode="decimal" value="${safe(budget.taxPercent)}"></div><div class="form-group"><label>Desconto (%)</label><input class="input budget-calc-v11" id="budget-discount-v11" inputmode="decimal" type="number" min="0" max="100" step="0.01" value="${safe(budget.discountPercent??'0')}"><small>Aplicado sobre o subtotal antes dos tributos.</small></div></div></section><section class="budget-form-section-v11"><h3>Condições da proposta</h3><div class="form-grid"><div class="form-group"><label>Condição de pagamento *</label><input class="input" id="budget-payment-v11" value="${safe(budget.paymentTerms)}"></div><div class="form-group"><label>Prazo após aprovação (dias úteis)</label><input class="input" id="budget-execution-v11" type="number" min="0" value="${safe(budget.executionDays)}"></div><div class="form-group span-2"><label>Garantia *</label><textarea class="textarea auto-grow-v202" id="budget-warranty-v11">${safe(budget.warranty)}</textarea></div><div class="form-group span-2"><label>E-mail do cliente *</label><input class="input" type="email" id="budget-recipient-v11" value="${safe(budget.recipient||client?.email||'')}"></div><div class="form-group span-2"><label>Observações comerciais</label><textarea class="textarea auto-grow-v202" id="budget-notes-v11">${safe(budget.commercialNotes)}</textarea></div></div></section></div><aside class="budget-preview-card-v11"><div class="budget-preview-head-v11"><img src="./assets/ar7-logo.png" alt="AR7"><div><span>${safe(budget.proposalCode)}</span><strong>Prévia da proposta</strong></div></div><div class="budget-preview-client-v11"><small>Cliente</small><strong>${safe(client?.name)}</strong><span>${safe(eq?.tag)} · ${safe(equipmentDescription(eq))}</span></div><div id="budget-summary-preview-v12">${budgetSummaryTableV11(order,true)}</div><div class="budget-preview-terms-v11" id="budget-terms-preview-v12"><p><strong>Pagamento:</strong> ${safe(budget.paymentTerms)}</p><p><strong>Prazo:</strong> ${safe(budget.executionDays)} dias úteis após aprovação e disponibilidade dos materiais.</p><p><strong>Validade:</strong> ${formatDate(budget.validUntil)}</p></div></aside></div><div class="budget-workflow-actions-v11 readiness-actions-v202"><button class="btn btn-light" data-action="save-budget-v11" data-id="${order.id}">${icon('save')} Salvar rascunho</button><button class="btn btn-light" data-action="view-proposal-v11" data-id="${order.id}">${icon('file')} Visualizar proposta</button><button class="btn ${readyForReview?'btn-success':'btn-light readiness-pending-v202'}" data-action="submit-budget-review-v11" data-id="${order.id}" ${readyForReview?'':'disabled'}>${readyForReview?icon('check',15):icon('clock',15)} ${readyForReview?'Pronto: enviar para revisão':'Complete os dados para revisar'}</button><button class="btn ${canApprove?'btn-success':'btn-light readiness-pending-v202'}" data-action="approve-budget-internal-v11" data-id="${order.id}" ${canApprove?'':'disabled'}>${icon(canApprove?'check':'clock',15)} ${canApprove?'Pronto: aprovar internamente':'Aguardando revisão interna'}</button><button class="btn ${canSend?'btn-success':'btn-light readiness-pending-v202'}" data-action="send-budget-client-v11" data-id="${order.id}" ${canSend?'':'disabled'}>${icon(canSend?'send':'clock',15)} ${canSend?'Pronto: enviar ao cliente':'Aguardando aprovação interna'}</button></div>${budget.internalReviewer?`<div class="internal-review-note-v11">${icon('check',18)}<div><strong>Revisado por ${safe(budget.internalReviewer)}</strong><span>${budget.internalApprovedAt?formatDateTime(budget.internalApprovedAt):''}${budget.internalReviewNote?` · ${safe(budget.internalReviewNote)}`:''}</span></div></div>`:''}</div></section>`;
+  };
+
+  partsTableV5=function(order,purchaseMode=false){
+    const workshopInstallMode=order.stage==='montagem'&&!purchaseMode;
+    const rows=(order.parts||[]).map(part=>{
+      const next=purchaseMode?purchaseNextStatusV8(part.status):'';let actions='';
+      if(purchaseMode){
+        const ready=partAdvanceReadyV202(order,part),label=next?`Marcar como ${next}`:'';
+        const why=next==='Comprada'&&!approvalGrantedV10(order)?'Aguardando aprovação do cliente':next==='Comprada'&&!partSupplier(part)&&!quoteIsValidV11(selectedQuoteV11(part))?'Complete fornecedor/cotação':'Complete os dados necessários';
+        const purchaseAction=next?`<button class="btn ${ready?'btn-success':'btn-light readiness-pending-v202'} btn-sm" data-action="advance-part" data-order="${order.id}" data-part="${part.id}" ${ready?'':`disabled title="${safe(why)}"`}>${icon(ready?'check':'clock',14)} ${safe(ready?label:why)}</button>`:`<span class="purchase-handoff-status">${part.status==='Separada'?'Aguardando instalação na Oficina':'Instalada pela Oficina'}</span>`;
+        actions=`<button class="btn btn-light btn-sm" data-action="edit-purchase" data-order="${order.id}" data-part="${part.id}">Dados da compra</button>${purchaseAction}`;
+      }else if(workshopInstallMode){
+        if(part.status==='Instalada')actions=`<span class="workshop-installed">${icon('check',14)} Instalada pela Oficina</span>`;
+        else if(part.status==='Separada')actions=`<button class="btn btn-success btn-sm" data-action="install-part" data-order="${order.id}" data-part="${part.id}">${icon('check',14)} Pronto: confirmar instalação</button>`;
+        else actions=`<button class="btn btn-light btn-sm readiness-pending-v202" disabled>${icon('clock',14)} Aguardando separação</button>`;
+      }
+      return `<tr><td>${part.photo?`<img class="part-photo" src="${part.photo}" alt="Foto da peça">`:'<span class="part-photo-placeholder">—</span>'}</td><td><strong>${safe(part.name)}</strong><br><span class="muted-small">${safe(part.position||'Aplicação não informada')}</span>${part.technicalNote?`<details class="inline-details"><summary>Especificação técnica</summary><p>${safe(part.technicalNote)}</p></details>`:''}</td><td>${safe(part.code||'—')}</td><td>${safe(part.dimensions||'—')}</td><td>${safe(partQuantity(part))}</td><td>${badge(part.status,partTone(part.status))}</td><td><div class="row-actions">${actions}</div></td></tr>`;
+    }).join('');
+    const actionTitle=purchaseMode?'Ação de Compras':workshopInstallMode?'Confirmação da Oficina':' ';
+    return `<div class="table-wrap parts-table-wrap"><table class="table parts-table"><thead><tr><th>Foto</th><th>Peça / aplicação</th><th>Código</th><th>Medidas</th><th>Qtd.</th><th>Status</th><th>${actionTitle}</th></tr></thead><tbody>${rows||'<tr><td colspan="7"><div class="empty"><strong>Nenhuma peça informada</strong><span>Adicione uma necessidade técnica ou marque que o serviço não precisa de peças.</span></div></td></tr>'}</tbody></table></div>`;
+  };
+
+  partsView=function(filter=''){
+    const all=db.orders.flatMap(order=>(order.parts||[]).map(part=>({...part,order}))),parts=all.filter(item=>typeof partsFilterV12==='function'?partsFilterV12(filter,item):true);
+    const awaitingOrders=db.orders.filter(order=>approvalPendingV10(order)&&['aprovacao','pecas'].includes(order.stage)).length;
+    const rows=parts.map(item=>{const eq=getEquipment(item.order.equipmentId),commercial=item.purchase||{},next=purchaseNextStatusV8(item.status),ready=partAdvanceReadyV202(item.order,item);const blockedReason=next==='Comprada'&&!approvalGrantedV10(item.order)?'Aguardando aprovação':next==='Comprada'&&!partSupplier(item)&&!quoteIsValidV11(selectedQuoteV11(item))?'Complete os dados da compra':'Aguardando condição';const actionLabel=ready&&next?`Marcar como ${next}`:blockedReason;return `<tr><td>${item.photo?`<img class="part-photo" src="${item.photo}" alt="Foto da peça">`:'<span class="part-photo-placeholder">—</span>'}</td><td><div class="part-technical"><strong>${safe(item.name)}</strong><small>Código: ${safe(item.code||'não informado')}</small><small>Medidas: ${safe(item.dimensions||'não informadas')}</small><small>Aplicação: ${safe(item.position||'não informada')}</small></div></td><td><a class="table-link" href="#order/${item.order.id}">OS #${safe(item.order.number)}</a><br>${safe(eq?.tag||'—')} · ${safe(equipmentDescription(eq))}</td><td>${safe(partQuantity(item))}</td><td>${badge(item.status,partTone(item.status))}</td><td>${approvalColumnV10(item.order)}</td><td><div class="commercial-summary"><strong>${safe(commercial.supplier||selectedQuoteV11(item)?.supplier||'Compras ainda não preencheu')}</strong><span>${commercial.expectedDate?`Previsão: ${formatDate(commercial.expectedDate)}`:'Sem previsão'}</span><span>${commercial.quote?`Cotação/Pedido: ${safe(commercial.quote)}`:''}</span></div></td><td>${safe(commercial.location||'—')}</td><td><div class="row-actions"><button class="btn btn-light btn-sm" data-action="edit-purchase" data-order="${item.order.id}" data-part="${item.id}">${icon('edit',14)} Dados da compra</button>${next?`<button class="btn ${ready?'btn-success':'btn-light readiness-pending-v202'} btn-sm" data-action="advance-part" data-order="${item.order.id}" data-part="${item.id}" ${ready?'':`disabled title="${safe(blockedReason)}"`}>${icon(ready?'check':'clock',14)} ${safe(actionLabel)}</button>`:`<span class="purchase-handoff-status">${item.status==='Separada'?'Aguardando instalação na Oficina':'Instalada pela Oficina'}</span>`}</div></td></tr>`;}).join('');
+    const pending=all.filter(part=>!['Recebida','Separada','Instalada'].includes(part.status)).length;
+    return shell(`<div class="page">${pageHead('Peças, Compras e Aprovações',filter?`Filtro atual: ${safe(filter)}.`:'Os botões ficam verdes somente quando todas as condições para avançar estiverem atendidas.',`<button class="btn btn-primary" data-action="new-part-global">${icon('plus')} Nova solicitação técnica</button>`)}<div class="approval-rule-banner-v10" id="approval-blocked-help-v10">${icon('check',22)}<div><strong>Leitura rápida de liberação</strong><span>Botão verde = pronto para confirmar. Botão cinza = ainda existe condição pendente. Comprar exige aprovação válida do cliente.</span></div></div><div class="grid kpi-grid">${kpi(parts.length,'Itens neste filtro','gear','bg-blue')}${kpi(awaitingOrders,'Aguardando aprovação','clock','bg-amber','#orders/aprovacao','Ver aprovações')}${kpi(all.filter(p=>p.status==='Em cotação').length,'Em cotação','clipboard','bg-purple')}${kpi(all.filter(p=>p.status==='Comprada').length,'Comprados','box','bg-amber')}${kpi(pending,'Pendentes','clock','bg-red')}</div><section class="card"><div class="card-head"><div><h2>Fila integrada de materiais</h2><p>Compra, recebimento e separação seguem o mesmo padrão visual de prontidão.</p></div></div><div class="table-wrap"><table class="table"><thead><tr><th>Foto</th><th>Especificação técnica</th><th>OS / Equipamento</th><th>Qtd.</th><th>Material</th><th>Aprovação</th><th>Dados de Compras</th><th>Local</th><th>Ações</th></tr></thead><tbody>${rows||'<tr><td colspan="9"><div class="empty">Nenhuma peça cadastrada</div></td></tr>'}</tbody></table></div></section></div>`,'parts');
+  };
+
+  orderDetailView=function(orderId){
+    const order=getOrder(orderId);if(!order)return notFoundView();order.records=order.records||{diagnosis:'',assembly:'',tests:'',conclusion:''};order.photos=order.photos||{before:[],during:[],assembly:[],after:[]};
+    const client=getClient(order.clientId),eq=getEquipment(order.equipmentId),idx=stageIndex(order.stage),progress=Math.round((idx/(STAGES.length-1))*100),current=STAGES[idx],next=nextStageForOrder(order),requirements=stageRequirements(order),ready=requirements.every(item=>item.ok),nextTeam=order.stage==='concluida'?null:next;
+    const stairs=STAGES.map((stage,i)=>`<button type="button" class="workflow-step ${i<idx?'done':''} ${i===idx?'current selected-v202':''} ${i>idx?'locked':''}" data-flow-index="${i}" data-flow-label="${safe(stage.label)}" data-flow-team="${safe(stage.team)}" data-flow-short="${safe(stage.short)}" data-flow-state="${i<idx?'Concluída':i===idx?'Etapa atual':'Pendente'}" ${i===idx?'aria-current="step"':''}><div class="workflow-step-top"><span>${i<idx?icon('check',14):i+1}</span><small>${safe(stage.team)}</small></div><strong>${safe(stage.label)}</strong><p>${safe(stage.short)}</p></button>`).join('');
+    let primary='';
+    if(order.stage==='relatorio')primary=`<button class="btn ${ready?'btn-success':'btn-light readiness-pending-v202'}" data-action="open-report" data-id="${order.id}">${icon(ready?'check':'file')} ${ready?'Pronto: abrir relatório':'Abrir relatório e concluir pendências'}</button>`;
+    else if(order.stage==='concluida')primary=`<button class="btn btn-success" disabled>${icon('check')} Processo concluído</button>`;
+    else primary=`<button class="btn ${ready?'btn-success':'btn-light readiness-pending-v202'}" data-action="advance-stage" data-id="${order.id}" ${ready?'':`title="Conclua todos os requisitos desta etapa"`}>${icon(ready?'check':'clock',16)} ${safe(handoffButtonLabelV5(order))}</button>`;
+    const handoffs=(order.handoffs||[]).slice().reverse().map(item=>`<div class="handoff-item"><span>${icon('arrow',14)}</span><div><strong>${safe(item.fromTeam)} → ${safe(item.toTeam)}</strong><small>${formatDateTime(item.at)}</small></div></div>`).join('');
+    return shell(`<div class="page">${pageHead(`OS ${safe(order.number)}`,`${safe(client?.name)} · ${safe(eq?.tag)} · ${safe(equipmentDescription(eq))}`,`<button class="btn btn-light" data-action="open-report" data-id="${order.id}">${icon('file')} Relatório</button>`)}<section class="workflow-card workflow-card-v202"><div class="workflow-title"><div><span>Fluxo guiado</span><h2>Andamento da OS</h2><p class="workflow-subtitle-v202">Verde concluído · vermelho etapa atual · cinza próxima etapa</p></div>${badge(`${progress}% concluído`,progress===100?'green':'blue')}</div><div class="workflow-stair workflow-compact-v202">${stairs}</div><div class="workflow-selected-detail-v202" id="workflow-selected-detail-v202"><span>${safe(current.team)} · Etapa atual</span><strong>${safe(current.label)}</strong><small>${safe(current.short)}</small></div></section><section class="current-task current-task-v202"><div class="current-team"><small>ETAPA ATUAL</small><strong>${safe(current.team)}</strong><span>${safe(current.label)}</span></div><div class="task-body"><div><small>Conferência automática</small><div class="requirement-list">${requirements.map(item=>`<div class="requirement ${item.ok?'ok':'pending'}"><span>${icon(item.ok?'check':'clock',16)}</span><strong>${safe(item.label)}</strong></div>`).join('')}</div></div><div class="next-team"><small>${nextTeam?'PRÓXIMA EQUIPE':'PROCESSO'}</small><strong>${nextTeam?safe(nextTeam.team):'Encerrado'}</strong><span>${nextTeam?safe(nextTeam.label):'Disponível ao cliente'}</span></div></div><div class="task-actions readiness-actions-v202"><button class="btn btn-light" data-action="save-stage" data-id="${order.id}">${icon('save')} Salvar etapa</button>${primary}</div></section><section class="card os-identification"><div class="detail-hero"><div class="detail-field"><label>Cliente / TAG</label><strong>${safe(client?.name)} · ${safe(eq?.tag)}</strong></div><div class="detail-field"><label>Equipamento</label><strong>${safe(equipmentDescription(eq))}</strong></div><div class="detail-field"><label>Entrada / Prazo</label><strong>${formatDate(order.entryDate)}<br>${formatDate(order.dueDate)}</strong></div><div class="detail-field"><label>Defeito informado</label><strong>${safe(order.defect)}</strong></div></div></section>${currentStageWorkspace(order)}${orderHistoryV5(order)}<section class="card handoff-card"><div class="card-head"><h2>Passagens entre equipes</h2></div><div class="card-body handoff-list">${handoffs||'<div class="empty">Nenhuma passagem registrada.</div>'}</div></section></div>`,'workshop');
+  };
+
+  function setReadinessButtonV202(button,ready,{disablePending=false,readyText='',pendingText=''}={}){
+    if(!button)return;
+    button.classList.toggle('btn-success',Boolean(ready));
+    button.classList.toggle('btn-light',!ready);
+    button.classList.toggle('readiness-pending-v202',!ready);
+    if(disablePending)button.disabled=!ready;
+    button.setAttribute('aria-disabled',!ready?'true':'false');
+    if(ready)button.title='Condições atendidas: pronto para avançar';
+    else button.title='Ainda existem condições pendentes';
+    if(ready&&readyText)button.lastChild&&(button.lastChild.textContent=` ${readyText}`);
+    if(!ready&&pendingText)button.lastChild&&(button.lastChild.textContent=` ${pendingText}`);
+  }
+  function refreshReadinessV202(order){
+    if(!order)return;
+    if(order.stage==='cotacao')collectQuotationV11(order);
+    if(order.stage==='orcamento')collectBudgetV11(order);
+    const requirements=stageRequirements(order),stageReady=requirements.length>0&&requirements.every(item=>item.ok);
+    setReadinessButtonV202(document.querySelector(`[data-action="advance-stage"][data-id="${CSS.escape(String(order.id))}"]`),stageReady);
+    if(order.stage==='orcamento'){
+      const budget=ensureBudgetV11(order),readyForReview=budgetReadyForReviewV202(order);
+      const submit=document.querySelector(`[data-action="submit-budget-review-v11"][data-id="${CSS.escape(String(order.id))}"]`);
+      setReadinessButtonV202(submit,readyForReview,{disablePending:true,readyText:'Pronto: enviar para revisão',pendingText:'Complete os dados para revisar'});
+      const approve=document.querySelector(`[data-action="approve-budget-internal-v11"][data-id="${CSS.escape(String(order.id))}"]`);
+      setReadinessButtonV202(approve,budget.status===BUDGET_STATUS_V11.REVIEW,{disablePending:true,readyText:'Pronto: aprovar internamente',pendingText:'Aguardando revisão interna'});
+      const send=document.querySelector(`[data-action="send-budget-client-v11"][data-id="${CSS.escape(String(order.id))}"]`);
+      setReadinessButtonV202(send,budget.status===BUDGET_STATUS_V11.INTERNAL_APPROVED,{disablePending:true,readyText:'Pronto: enviar ao cliente',pendingText:'Aguardando aprovação interna'});
+    }
+  }
+  function refreshCurrentOrderReadinessV202(){
+    const {route,param}=parseRoute();if(route!=='order'||!param)return;refreshReadinessV202(getOrder(param));
+  }
+  document.addEventListener('input',event=>{
+    if(event.target.matches('#quotation-responsible-v11,#quotation-notes-v11,#budget-billing-type-v11,#budget-scope-v11,#budget-parts-markup-v11,#budget-labor-v11,#budget-third-party-v11,#budget-freight-v11,#budget-other-v11,#budget-tax-v11,#budget-discount-v11,#budget-payment-v11,#budget-execution-v11,#budget-warranty-v11,#budget-valid-v11,#budget-recipient-v11,#budget-notes-v11'))setTimeout(refreshCurrentOrderReadinessV202,0);
+  });
+  document.addEventListener('change',event=>{
+    if(event.target.matches('input,select,textarea'))setTimeout(refreshCurrentOrderReadinessV202,0);
+  },true);
+
+  function autoGrowTextareaV202(el){
+    if(!(el instanceof HTMLTextAreaElement))return;el.style.height='auto';const h=Math.min(Math.max(el.scrollHeight,96),360);el.style.height=`${h}px`;el.style.overflowY=el.scrollHeight>360?'auto':'hidden';
+  }
+  function scrollContainerForV202(target){
+    let node=target?.parentElement;
+    while(node&&node!==document.body){
+      const style=getComputedStyle(node);
+      if(/auto|scroll/.test(style.overflowY)&&node.scrollHeight>node.clientHeight+8)return node;
+      node=node.parentElement;
+    }
+    return document.scrollingElement||document.documentElement;
+  }
+  function focusVisibleAboveKeyboardV202(target){
+    if(!target?.matches?.('input,select,textarea,[contenteditable="true"]'))return;
+    if(target instanceof HTMLTextAreaElement)autoGrowTextareaV202(target);
+    setTimeout(()=>{
+      try{target.scrollIntoView({behavior:'smooth',block:'center',inline:'nearest'});}catch{}
+      setTimeout(()=>{
+        const vv=window.visualViewport,rect=target.getBoundingClientRect();
+        const top=(vv?.offsetTop||0)+68;
+        const bottom=(vv?.offsetTop||0)+(vv?.height||window.innerHeight)-92;
+        let delta=0;
+        if(rect.bottom>bottom)delta=rect.bottom-bottom+18;
+        else if(rect.top<top)delta=rect.top-top-18;
+        if(Math.abs(delta)>2){
+          const scroller=scrollContainerForV202(target);
+          if(scroller===document.scrollingElement||scroller===document.documentElement)window.scrollBy({top:delta,behavior:'smooth'});
+          else scroller.scrollBy({top:delta,behavior:'smooth'});
+        }
+      },120);
+    },120);
+  }
+  function updateVisualViewportV202(){
+    const vv=window.visualViewport;
+    const visibleHeight=vv?.height||window.innerHeight;
+    const offsetTop=vv?.offsetTop||0;
+    document.documentElement.style.setProperty('--ar7-visible-height-v202',`${visibleHeight}px`);
+    const keyboard=Math.max(0,window.innerHeight-visibleHeight-offsetTop);
+    document.documentElement.style.setProperty('--ar7-keyboard-v202',`${keyboard}px`);
+    document.body.classList.toggle('keyboard-open-v202',keyboard>120);
+  }
+  function enhanceMobileUXV202(){
+    document.querySelectorAll('textarea').forEach(autoGrowTextareaV202);
+    updateVisualViewportV202();
+  }
+  document.addEventListener('click',event=>{
+    const step=event.target.closest('.workflow-compact-v202 .workflow-step[data-flow-index]');
+    if(!step)return;
+    const container=step.closest('.workflow-card-v202');
+    container?.querySelectorAll('.workflow-step').forEach(item=>item.classList.toggle('selected-v202',item===step));
+    const detail=container?.querySelector('#workflow-selected-detail-v202');
+    if(detail){
+      detail.innerHTML=`<span>${safe(step.dataset.flowTeam||'Equipe')} · ${safe(step.dataset.flowState||'Etapa')}</span><strong>${safe(step.dataset.flowLabel||'')}</strong><small>${safe(step.dataset.flowShort||'')}</small>`;
+    }
+  },true);
+
+  document.addEventListener('focusin',event=>focusVisibleAboveKeyboardV202(event.target),true);
+  document.addEventListener('input',event=>{if(event.target instanceof HTMLTextAreaElement)autoGrowTextareaV202(event.target);},true);
+  window.visualViewport?.addEventListener('resize',updateVisualViewportV202);
+  window.visualViewport?.addEventListener('scroll',updateVisualViewportV202);
+
+  function photoPagesV202(items,orderNumber,title='Evidências fotográficas'){
+    if(!items.length)return '';
+    const pages=[];
+    for(let index=0;index<items.length;index+=4)pages.push(items.slice(index,index+4));
+    return pages.map((page,pageIndex)=>`<section class="report-page report-photo-page report-photo-page-v13 report-photo-page-v202"><div class="report-page-header"><img src="./assets/ar7-logo.png" alt="AR7"><div><span>RELATÓRIO TÉCNICO · OS ${safe(orderNumber)}</span><strong>${safe(title)}${pages.length>1?` · ${pageIndex+1}/${pages.length}`:''}</strong></div></div><div class="report-photo-grid report-photo-grid-v202 count-${page.length}">${page.map((item,index)=>{const photo=item.photo;return `<figure><span class="report-photo-stage-v202">${safe(item.group)}</span>${reportPhotoSvgV7(photo)}<figcaption><strong>${safe(photo.caption||`Foto ${pageIndex*4+index+1}`)}</strong><span>${photo.observation?safe(photo.observation):'Registro fotográfico sem observação técnica complementar.'}</span></figcaption></figure>`;}).join('')}</div><div class="report-standard-note">Registros fotográficos vinculados à OS, organizados em ordem de execução para reduzir páginas sem perder a rastreabilidade técnica.</div><div class="report-footer"><span>AR7 Elétrica</span><span>Evidências fotográficas</span></div></section>`).join('');
+  }
+
+  reportPhotoSection=function(title,photos,orderNumber){
+    const items=(photos||[]).map(photo=>{const p=normalizePhotoV5(photo);p.observation=photoObservationV13(photo);return {group:title,photo:p};});
+    return photoPagesV202(items,orderNumber,title);
+  };
+
+  function consolidatedReportPhotosV202(order){
+    const groups=[
+      ['Recebimento',order.photos?.before||[]],
+      ['Diagnóstico e desmontagem',order.photos?.during||[]],
+      ['Montagem',order.photos?.assembly||[]],
+      ['Equipamento finalizado',order.photos?.after||[]]
+    ];
+    const items=[];
+    groups.forEach(([group,photos])=>(photos||[]).forEach(photo=>{const p=normalizePhotoV5(photo);p.observation=photoObservationV13(photo);items.push({group,photo:p});}));
+    return photoPagesV202(items,order.number,'Fotos do serviço');
+  }
+
+  const reportDocumentBeforeV202=reportDocumentV5;
+  reportDocumentV5=function(order){
+    const originalPhotoRenderer=reportPhotoSection;
+    let base='';
+    try{
+      reportPhotoSection=()=>''; // evita uma página separada para cada etapa
+      base=reportDocumentBeforeV202(order);
+    }finally{
+      reportPhotoSection=originalPhotoRenderer;
+    }
+    const photos=consolidatedReportPhotosV202(order);
+    return base.replace(/\s*<\/div>\s*$/,`${photos}</div>`);
+  };
+
+  reportPageCount=function(order){
+    const total=['before','during','assembly','after'].reduce((sum,key)=>sum+(order.photos?.[key]?.length||0),0);
+    return 5+Math.ceil(total/4);
+  };
+
+  const shellBeforeV202=shell;
+  shell=function(content,route,portal=false,portalClientId=''){
+    return shellBeforeV202(content,route,portal,portalClientId).replace(/<small>v20\.1<\/small>/g,'<small>v20.2</small>');
+  };
+
+  const renderBeforeV202=render;
+  render=function(options={}){renderBeforeV202(options);requestAnimationFrame(enhanceMobileUXV202);};
 
   render();
   initRemoteSyncV20();
