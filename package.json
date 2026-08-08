@@ -1,8 +1,8 @@
 {
   "name": "ar7-gestao-oficina",
-  "version": "20.2.2",
+  "version": "20.2.3",
   "private": true,
-  "description": "AR7 Gestão da Oficina V20.2.2 — revisão geral de fluxos, interface, responsividade, segurança de dados e relatório compacto.",
+  "description": "AR7 Gestão da Oficina V20.2.3 — revisão premium do relatório técnico e da proposta comercial, com equilíbrio visual e assinatura segura.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,8 @@
     "check": "node --check app.js && node --check server.js",
     "test": "node tests/smoke-v20.js",
     "test:ui": "node tests/ui-audit-v20.js",
-    "test:all": "npm test && npm run test:ui"
+    "test:all": "npm test && npm run test:ui && npm run test:docs",
+    "test:docs": "node tests/document-audit-v203.js"
   },
   "engines": {
     "node": ">=18"

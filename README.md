@@ -1,4 +1,4 @@
-# AR7 Gestão da Oficina V20.2.2
+# AR7 Gestão da Oficina V20.2.3
 
 Versão multi-dispositivo com banco central PostgreSQL.
 
@@ -83,7 +83,7 @@ O fluxo foi transformado em stepper compacto:
 ### Identidade visual
 A paleta e as cores existentes do projeto foram mantidas. O verde é usado somente como indicador de condição atendida/pronto para avançar, seguindo o padrão já existente no sistema.
 
-## V20.2.2 — revisão geral antes do piloto
+## V20.2.3 — revisão geral antes do piloto
 
 Esta versão recebeu uma revisão transversal do fluxo operacional e da interface, sem alterar a identidade visual da AR7.
 
@@ -138,13 +138,53 @@ A passagem entre etapas respeita os requisitos de prontidão. Ações pendentes 
 ### Verificações incluídas no pacote
 - `npm test`: smoke/integridade de código e servidor;
 - `npm run test:ui`: auditoria estrutural de 52 telas/estados, incluindo as dez etapas do fluxo;
-- `npm run test:all`: executa as duas suítes.
+- `npm run test:docs`: auditoria específica de relatório, proposta, assinaturas e crédito da plataforma;
+- `npm run test:all`: executa as três suítes.
 
 ## Notas para produção
 
-A V20.2.2 mantém propositalmente a arquitetura de estado central em JSONB para reduzir o risco desta etapa de implantação. Ela é adequada para o piloto e para evolução controlada, mas há dois pontos que devem entrar no planejamento de produção em escala:
+A V20.2.3 mantém propositalmente a arquitetura de estado central em JSONB para reduzir o risco desta etapa de implantação. Ela é adequada para o piloto e para evolução controlada, mas há dois pontos que devem entrar no planejamento de produção em escala:
 
 1. **Fotos:** hoje as imagens compactadas fazem parte do estado da aplicação. Com alto volume histórico, o ideal é migrar as imagens para object storage e manter no banco apenas metadados/URLs.
 2. **Usuários e permissões:** o servidor possui autenticação administrativa central. Para rastreabilidade individual de técnico, compras, supervisor e administrador, a próxima camada de produção deve adotar contas e permissões por usuário no servidor.
 
 Esses pontos não impedem a demonstração nem o piloto controlado, mas devem ser tratados antes de ampliar a solução para múltiplas oficinas ou grande volume de fotos simultâneas.
+
+## V20.2.3 — acabamento premium dos documentos
+
+Esta revisão acrescenta uma camada específica de qualidade ao **Relatório Técnico** e à **Proposta Técnico-Comercial**, mantendo o restante da V20.2.3 intacto.
+
+### Relatório técnico — distribuição de conteúdo
+- itens **1, 2 e 3** passam a ocupar a página de identificação com distribuição vertical equilibrada;
+- o diagnóstico não fica mais isolado deixando uma grande área branca sem função;
+- itens **4, 5, 6 e 7** permanecem juntos na página de intervenção, porém distribuídos ao longo do A4 em vez de ficarem comprimidos no topo;
+- itens **8 e 9** mantêm tabelas próprias de componentes e medições;
+- o item **10** e as assinaturas só dividem a página de componentes quando o volume é realmente seguro;
+- nomes, funções, datas e imagens de assinatura possuem linhas e alturas independentes, com quebra de texto protegida;
+- o último grupo de fotos encerra o PDF sem gerar página branca adicional.
+
+### Proposta técnico-comercial — nova apresentação
+A proposta foi redesenhada para parecer um documento comercial real, e não uma tela do sistema impressa:
+- capa com hierarquia de informação, identificação do equipamento e mensagem de valor;
+- contexto da necessidade, condição identificada e solução recomendada;
+- compromissos objetivos de execução e critério de liberação técnica;
+- destaque para rastreabilidade, validação e entrega documentada;
+- bloco **“Ao final, o cliente recebe”** com entregáveis concretos;
+- investimento, materiais e condições apresentados com maior transparência;
+- próximo passo e aceite em linguagem clara;
+- linhas de nome, data e autorização dimensionadas para não sobrepor assinatura ou texto.
+
+### Crédito da plataforma
+Foi incluído um crédito discreto nos documentos:
+
+**Desenvolvido por Nexora Sistemas**  
+*Tecnologia que organiza operações.*
+
+`Nexora Sistemas` foi adotado como nome de trabalho da empresa responsável pelo software. O nome está centralizado na constante `SOFTWARE_STUDIO_V203` em `app.js`, portanto pode ser trocado depois sem refazer os layouts dos documentos.
+
+### Auditoria específica dos documentos
+Além da auditoria geral, a versão inclui:
+- `npm run test:docs`: 15 verificações específicas de relatório, proposta, assinaturas e crédito da desenvolvedora;
+- renderização real em A4 usada durante a revisão para conferir cortes, página em branco e sobreposição;
+- proposta validada em **3 páginas A4**;
+- relatório de amostra validado em **7 páginas A4**, incluindo três páginas fotográficas, sem página branca final.

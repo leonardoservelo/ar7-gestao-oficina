@@ -1,4 +1,4 @@
-AR7 GESTAO DA OFICINA V20.2.2
+AR7 GESTAO DA OFICINA V20.2.3
 
 WINDOWS
 1. Extraia todo o ZIP.
@@ -6,7 +6,7 @@ WINDOWS
 3. Execute INICIAR.bat.
 4. O navegador abre automaticamente.
 
-A V20.2.2 procura outra porta automaticamente caso 8108 esteja ocupada.
+A V20.2.3 procura outra porta automaticamente caso 8108 esteja ocupada.
 Mantenha a janela preta aberta enquanto estiver usando o sistema local.
 
 IMPORTANTE
@@ -14,3 +14,9 @@ IMPORTANTE
 - Banco central PostgreSQL, login e sincronizacao multi-dispositivo foram mantidos.
 - Camera e Galeria continuam separadas e fotos grandes continuam sendo compactadas.
 - O deploy com banco central exige DATABASE_URL e as variaveis de autenticacao descritas no README.md.
+
+DOCUMENTOS V20.2.3
+- Relatorio tecnico com itens 1-3 e 4-7 rebalanceados no A4.
+- Assinaturas com area reservada para evitar sobreposicao.
+- Proposta tecnico-comercial redesenhada.
+- Credito discreto: Desenvolvido por Nexora Sistemas.

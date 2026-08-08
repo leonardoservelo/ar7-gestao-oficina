@@ -1,11 +1,11 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title AR7 Gestao da Oficina V20.2.2
+title AR7 Gestao da Oficina V20.2.3
 chcp 65001 >nul 2>nul
 
 echo ==============================================================
-echo  AR7 Gestao da Oficina V20.2.2
+echo  AR7 Gestao da Oficina V20.2.3
 echo  Iniciando servidor local...
 echo  Se 8108 estiver ocupada, outra porta sera escolhida sozinha.
 echo ==============================================================

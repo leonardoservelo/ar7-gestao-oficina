@@ -1320,7 +1320,7 @@ textarea.auto-grow-v202,
 }
 
 /* ============================================================
-   AR7 V20.2.2 - Relatório compacto e fotos separadas por etapa
+   AR7 V20.2.3 - Relatório compacto e fotos separadas por etapa
    Mantém a identidade visual atual; altera somente ocupação/espaço.
    ============================================================ */
 .report-document-v2021 .report-compact-page-v2021{
@@ -1609,7 +1609,7 @@ textarea.auto-grow-v202,
 }
 
 /* ============================================================
-   AR7 V20.2.2 — revisão geral de interface e responsividade
+   AR7 V20.2.3 — revisão geral de interface e responsividade
    Ajustes finais de alinhamento, legibilidade e estados interativos.
    ============================================================ */
 .page,.page-head,.card,.card-head,.card-body,.stack,.grid,.form-grid,.form-group,
@@ -1713,10 +1713,601 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 }
 .sync-badge-v20.conflict{background:#9d6500;pointer-events:auto;cursor:pointer;max-width:min(520px,calc(100vw - 36px));white-space:normal}
 
-/* V20.2.2 — KPIs de Compras sem largura fixa inline. */
+/* V20.2.3 — KPIs de Compras sem largura fixa inline. */
 .parts-kpis-v2022{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:900px){.parts-kpis-v2022{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:440px){.parts-kpis-v2022{grid-template-columns:1fr}}
 
-/* V20.2.2 — configurações sem largura mínima que estoure telas estreitas. */
+/* V20.2.3 — configurações sem largura mínima que estoure telas estreitas. */
 .settings-grid-v2022{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
+
+/* ============================================================
+   AR7 V20.2.3 — documentos premium
+   Equilíbrio do relatório, assinaturas seguras e proposta comercial.
+   ============================================================ */
+
+/* Crédito discreto da empresa responsável pela plataforma. */
+.developer-credit-v203{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:10px;
+  color:#817b80;
+  font-size:7.4px;
+  line-height:1.35;
+}
+.developer-credit-v203>span{letter-spacing:.02em}.developer-credit-v203>.developer-credit-by-v203{color:#696368;font-weight:800}
+.developer-credit-v203>strong{color:#2a272a;font-size:8px;letter-spacing:.04em}
+.developer-credit-v203>small{width:100%;font-size:6.7px;color:#9a9498}
+
+/* ---------- Relatório técnico: ritmo vertical e assinaturas ---------- */
+.report-document-v203 .report-balanced-page-v203{
+  padding-top:38px!important;
+  padding-bottom:58px!important;
+}
+.report-document-v203 .report-balanced-page-v203 .report-page-header{
+  margin-bottom:14px!important;
+  padding-bottom:9px!important;
+}
+.report-document-v203 .report-balanced-page-v203 .report-info-grid{
+  gap:8px!important;
+  margin-bottom:2px!important;
+}
+.report-document-v203 .report-balanced-page-v203 .report-info-grid article{
+  padding:9px 11px!important;
+}
+.report-document-v203 .report-balanced-page-v203 .report-text-section{
+  margin-top:13px!important;
+  padding-top:0!important;
+  break-inside:avoid;
+}
+.report-document-v203 .report-balanced-page-v203 .report-text-section h2,
+.report-document-v203 .report-balanced-page-v203 .report-section-title{
+  margin:0 0 7px!important;
+  padding-bottom:6px!important;
+}
+.report-document-v203 .report-balanced-page-v203 .report-text-section p{
+  margin:0!important;
+  font-size:10px!important;
+  line-height:1.58!important;
+}
+.report-document-v203 .report-identification-v203 .report-balanced-section-v203{
+  margin-top:14px!important;
+}
+.report-document-v203 .report-intervention-v203 .report-text-section{
+  margin-top:16px!important;
+}
+.report-document-v203 .report-intervention-v203 .report-text-section:first-of-type{
+  margin-top:4px!important;
+}
+.report-document-v203 .report-intervention-v203 .conclusion,
+.report-document-v203 .report-intervention-v203 .recommendations{
+  padding:10px 12px!important;
+}
+.report-document-v203 .report-components-v203 .report-table{
+  margin:7px 0 13px!important;
+}
+.report-document-v203 .report-components-v203 .report-table th,
+.report-document-v203 .report-components-v203 .report-table td{
+  padding:6px 7px!important;
+  line-height:1.3!important;
+}
+.report-document-v203 .report-divider-v203{
+  margin:13px 0 11px!important;
+  background:#d8d2d6!important;
+}
+
+/* Nunca comprimir assinatura a ponto de nome, função ou data encostarem na imagem. */
+.report-document-v203 .report-signature-grid-v9{
+  gap:18px!important;
+  margin:10px 0 16px!important;
+  align-items:start!important;
+}
+.report-document-v203 .report-signature-card-v9{
+  min-height:136px!important;
+  padding:7px 6px 8px!important;
+  display:grid!important;
+  grid-template-rows:auto 64px auto auto auto!important;
+  row-gap:4px!important;
+  align-content:start!important;
+  overflow:visible!important;
+}
+.report-document-v203 .report-signature-label-v9{
+  min-height:14px;
+  display:block;
+  font-size:7.5px!important;
+  line-height:1.25!important;
+}
+.report-document-v203 .report-signature-image-v9{
+  height:64px!important;
+  min-height:64px!important;
+  margin:0 0 3px!important;
+  padding:0 5px!important;
+  overflow:hidden!important;
+  display:grid!important;
+  place-items:center!important;
+  border-bottom:1px solid #8f898d!important;
+}
+.report-document-v203 .report-signature-image-v9 img{
+  width:100%!important;
+  height:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+  padding:2px 6px!important;
+}
+.report-document-v203 .report-signature-card-v9>strong{
+  display:block!important;
+  margin:2px 0 0!important;
+  font-size:10px!important;
+  line-height:1.3!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+}
+.report-document-v203 .report-signature-card-v9>small{
+  display:block!important;
+  margin:0!important;
+  font-size:7.5px!important;
+  line-height:1.3!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+}
+.report-document-v203 .report-signature-note-v9{
+  margin-top:7px!important;
+  padding:7px 9px!important;
+  font-size:7.6px!important;
+  line-height:1.42!important;
+}
+.report-document-v203 .report-signature-safe-v203 .supervisor-title-v9{
+  margin-top:14px!important;
+}
+.report-document-v203 .report-signature-safe-v203 .developer-credit-v203{
+  margin-top:8px;
+}
+
+/* ---------- Proposta técnico-comercial V20.2.3 ---------- */
+.proposal-document-v203{
+  --proposal-dark:#19181a;
+  --proposal-red:#c9202f;
+  --proposal-red-dark:#9e1722;
+  --proposal-ink:#242326;
+  --proposal-muted:#706b70;
+  --proposal-line:#e2dde0;
+  --proposal-soft:#f8f6f7;
+}
+.proposal-document-v203 .report-page{
+  color:var(--proposal-ink);
+}
+.proposal-cover-v203{
+  padding:48px 56px!important;
+  background:linear-gradient(180deg,#fff 0 78%,#faf8f9 78% 100%)!important;
+}
+.proposal-cover-v203:before{
+  width:45%!important;
+  background:linear-gradient(155deg,#19181a 0 58%,#c9202f 58% 67%,#efebed 67%)!important;
+  clip-path:polygon(34% 0,100% 0,100% 100%,0 100%)!important;
+}
+.proposal-cover-v203:after{
+  right:-95px!important;
+  bottom:-115px!important;
+  width:360px!important;
+  height:360px!important;
+  border-color:rgba(201,32,47,.075)!important;
+}
+.proposal-cover-top-v203 img{width:142px!important}
+.proposal-cover-top-v203>div{max-width:260px}
+.proposal-cover-top-v203 span{font-size:8.5px!important;letter-spacing:.16em!important}
+.proposal-cover-top-v203 strong{font-size:12px!important;letter-spacing:.03em}
+.proposal-cover-main-v203{
+  width:55%!important;
+  max-width:55%!important;
+  margin-top:70px!important;
+}
+.proposal-cover-main-v203>span{
+  display:block;
+  max-width:470px;
+  font-size:8.5px!important;
+  line-height:1.45;
+  letter-spacing:.13em!important;
+  color:#817b80!important;
+}
+.proposal-cover-main-v203 h1{
+  margin:14px 0 13px!important;
+  font-size:38px!important;
+  line-height:1.05!important;
+  letter-spacing:-.035em!important;
+  text-wrap:balance;
+}
+.proposal-cover-main-v203 p{
+  max-width:470px;
+  margin:0!important;
+  font-size:15px!important;
+  line-height:1.35!important;
+  color:var(--proposal-red)!important;
+  font-weight:850!important;
+}
+.proposal-cover-company-v203{
+  width:55%!important;
+  max-width:55%!important;
+  margin-top:46px!important;
+  padding:16px 18px!important;
+  border-left-width:4px!important;
+  background:#f7f4f5!important;
+}
+.proposal-cover-company-v203 strong{font-size:20px!important;line-height:1.2}
+.proposal-cover-company-v203 span{font-size:10px!important;line-height:1.4}
+.proposal-cover-meta-v203{
+  max-width:690px!important;
+  margin-top:22px!important;
+  gap:8px!important;
+}
+.proposal-cover-meta-v203>div{
+  padding:10px 11px!important;
+  border-color:var(--proposal-line)!important;
+  box-shadow:0 4px 14px rgba(36,35,38,.025);
+}
+.proposal-cover-trust-v203{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  width:55%;
+  margin-top:18px;
+}
+.proposal-cover-trust-v203 span{
+  padding:6px 9px;
+  border:1px solid #ded8dc;
+  border-radius:999px;
+  background:#fff;
+  color:#5f5a5e;
+  font-size:7.5px;
+  font-weight:800;
+}
+.proposal-cover-message-v203{
+  width:55%!important;
+  max-width:55%!important;
+  margin-top:17px!important;
+  font-size:9px!important;
+  line-height:1.55!important;
+  color:#6f696e!important;
+}
+.proposal-cover-v203 .developer-credit-v203{width:55%;margin-top:14px}
+
+.proposal-technical-v203,
+.proposal-commercial-v203{
+  padding-top:42px!important;
+  padding-bottom:58px!important;
+}
+.proposal-document-v203 .report-page-header{
+  margin-bottom:16px;
+  padding-bottom:10px;
+}
+.proposal-intro-v203{
+  margin:0 0 13px!important;
+  padding:14px 16px!important;
+  border-left:4px solid var(--proposal-red)!important;
+  background:linear-gradient(90deg,#fff7f8,#fff)!important;
+}
+.proposal-intro-v203>span{
+  display:block;
+  margin-bottom:5px;
+  color:var(--proposal-red-dark);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.11em;
+}
+.proposal-intro-v203>strong{
+  display:block;
+  font-size:13px!important;
+  line-height:1.3;
+  color:#272427;
+}
+.proposal-intro-v203>p{
+  margin:6px 0 0!important;
+  font-size:9.2px!important;
+  line-height:1.55!important;
+  color:#5f5a5e!important;
+}
+.proposal-context-v203{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+}
+.proposal-context-v203 article{padding:9px 11px!important}
+.proposal-context-v203 article strong{display:block;margin-top:4px;font-size:10.5px;line-height:1.3}
+.proposal-context-v203 article p{font-size:8px!important;line-height:1.35!important;margin-top:4px!important}
+.proposal-numbered-v203{
+  grid-template-columns:34px 1fr!important;
+  gap:10px!important;
+  margin-top:12px!important;
+}
+.proposal-numbered-v203>span{
+  width:31px!important;
+  height:31px!important;
+  font-size:9px!important;
+}
+.proposal-numbered-v203 h2{margin:0 0 5px!important;font-size:13px!important}
+.proposal-numbered-v203 p{font-size:9.2px!important;line-height:1.5!important;color:#514d50!important}
+.proposal-value-strip-v203{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-top:13px;
+}
+.proposal-value-strip-v203 article{
+  position:relative;
+  padding:11px 11px 10px;
+  border:1px solid var(--proposal-line);
+  border-radius:9px;
+  background:#fff;
+  box-shadow:0 4px 13px rgba(36,35,38,.03);
+}
+.proposal-value-strip-v203 article:before{
+  content:"";
+  position:absolute;
+  top:-1px;left:10px;right:10px;
+  height:2px;
+  background:var(--proposal-red);
+}
+.proposal-value-strip-v203 strong{display:block;font-size:9px;line-height:1.3;color:#2a272a}
+.proposal-value-strip-v203 p{margin:5px 0 0;font-size:7.7px;line-height:1.42;color:#6a6569}
+.proposal-journey-v203{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+  margin-top:11px;
+  padding:9px;
+  border:1px solid #e4dfe2;
+  border-radius:10px;
+  background:#faf9fa;
+}
+.proposal-journey-v203>div{padding:5px 7px;border-right:1px solid #e3dfe1}
+.proposal-journey-v203>div:last-child{border-right:0}
+.proposal-journey-v203 span{display:block;color:var(--proposal-red);font-size:7px;font-weight:900;letter-spacing:.1em}
+.proposal-journey-v203 strong{display:block;margin-top:3px;font-size:8.5px;line-height:1.25}
+.proposal-journey-v203 small{display:block;margin-top:2px;font-size:6.8px;line-height:1.3;color:#7b7579}
+.proposal-standard-v203{margin-top:11px!important;padding:11px 14px!important}
+.proposal-standard-v203 h3{margin-bottom:5px!important;font-size:10px!important}
+.proposal-standard-v203 ul{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:0;margin:0!important}
+.proposal-standard-v203 li{font-size:7.5px!important;line-height:1.42!important;margin:3px 0!important}
+.proposal-acceptance-criteria-v203{margin-top:10px!important;padding:9px 12px!important}
+.proposal-acceptance-criteria-v203 strong{font-size:9px!important}
+.proposal-acceptance-criteria-v203 p{font-size:7.7px!important;line-height:1.4!important}
+
+.proposal-commercial-lead-v203{
+  margin-bottom:13px;
+  padding:12px 14px;
+  border-left:4px solid var(--proposal-red);
+  background:#f8f6f7;
+  border-radius:0 9px 9px 0;
+}
+.proposal-commercial-lead-v203 span{display:block;font-size:7px;font-weight:900;letter-spacing:.11em;color:var(--proposal-red-dark)}
+.proposal-commercial-lead-v203 strong{display:block;margin-top:4px;font-size:12px;line-height:1.3}
+.proposal-commercial-lead-v203 p{margin:5px 0 0;font-size:8px;line-height:1.45;color:#696368}
+.proposal-parts-table-v203{margin-bottom:12px!important}
+.proposal-parts-table-v203 th,.proposal-parts-table-v203 td{padding:6px 7px!important;line-height:1.28}
+.proposal-investment-v203{margin-top:12px!important;gap:12px!important}
+.proposal-investment-v203>div:first-child{
+  padding:16px!important;
+  background:linear-gradient(145deg,#19181a,#2e2b2f)!important;
+  border-radius:11px!important;
+}
+.proposal-investment-v203>div:first-child strong{font-size:25px!important;margin:5px 0!important}
+.proposal-investment-v203 .budget-summary-table-v11{padding:9px 12px!important}
+.proposal-investment-v203 .budget-summary-table-v11>div{padding:5px 0!important}
+.proposal-conditions-grid-v203{margin-top:12px!important;gap:8px!important}
+.proposal-conditions-grid-v203 article{padding:9px 11px!important}
+.proposal-conditions-grid-v203 strong{font-size:9px!important;line-height:1.35!important}
+.proposal-conditions-grid-v203 small{font-size:7px!important;line-height:1.35!important}
+.proposal-note-v203{margin-top:9px!important;padding:9px 11px!important}
+.proposal-next-step-v203{
+  margin-top:11px;
+  padding:11px 13px;
+  border:1px solid #e0dadd;
+  border-radius:10px;
+  background:linear-gradient(90deg,#fff,#faf7f8);
+}
+.proposal-next-step-v203 span{display:block;font-size:7px;font-weight:900;letter-spacing:.11em;color:var(--proposal-red-dark)}
+.proposal-next-step-v203 strong{display:block;margin-top:4px;font-size:10px;line-height:1.35}
+.proposal-next-step-v203 p{margin:5px 0 0;font-size:7.7px;line-height:1.4;color:#6d676b}
+.proposal-acceptance-v203{
+  margin-top:10px!important;
+  padding:11px 12px!important;
+  display:grid!important;
+  grid-template-columns:.9fr 1.5fr!important;
+  gap:14px!important;
+  align-items:end!important;
+}
+.proposal-acceptance-v203>div:first-child p{font-size:7.4px!important;line-height:1.35!important;margin:4px 0 0!important}
+.proposal-signatures-v203{gap:12px!important;align-items:end}
+.proposal-signatures-v203>div{
+  height:42px!important;
+  min-height:42px!important;
+  padding:0 3px 3px!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  border-bottom:1px solid #3d393c!important;
+}
+.proposal-signatures-v203 span{
+  position:static!important;
+  padding:0!important;
+  font-size:7px!important;
+  line-height:1.2!important;
+  color:#777176!important;
+}
+.proposal-commercial-v203 .developer-credit-v203{margin-top:8px}
+
+@media(max-width:760px){
+  .proposal-cover-main-v203,.proposal-cover-company-v203,.proposal-cover-message-v203,.proposal-cover-v203 .developer-credit-v203,.proposal-cover-trust-v203{width:100%!important;max-width:100%!important}
+  .proposal-cover-v203:before{opacity:.08;width:100%!important}
+  .proposal-cover-top-v203>div{color:#262326!important}
+  .proposal-value-strip-v203,.proposal-journey-v203,.proposal-standard-v203 ul{grid-template-columns:1fr!important}
+  .proposal-journey-v203>div{border-right:0;border-bottom:1px solid #e3dfe1}.proposal-journey-v203>div:last-child{border-bottom:0}
+  .proposal-acceptance-v203{grid-template-columns:1fr!important}
+}
+
+@media print{
+  .developer-credit-v203{margin-top:2mm!important;font-size:5.7pt!important;line-height:1.25!important}
+  .developer-credit-v203>strong{font-size:6.1pt!important}.developer-credit-v203>small{font-size:5.2pt!important}
+
+  .report-document-v203 .report-balanced-page-v203{padding:10mm 14mm 17mm!important}
+  .report-document-v203 .report-balanced-page-v203 .report-page-header{margin-bottom:3mm!important;padding-bottom:2.2mm!important}
+  .report-document-v203 .report-balanced-page-v203 .report-info-grid{gap:2mm!important}
+  .report-document-v203 .report-balanced-page-v203 .report-info-grid article{padding:2mm 2.4mm!important}
+  .report-document-v203 .report-balanced-page-v203 .report-text-section{margin-top:3.2mm!important;break-inside:avoid!important}
+  .report-document-v203 .report-balanced-page-v203 .report-text-section h2,.report-document-v203 .report-balanced-page-v203 .report-section-title{margin-bottom:1.6mm!important;padding-bottom:1.4mm!important}
+  .report-document-v203 .report-balanced-page-v203 .report-text-section p{font-size:7.7pt!important;line-height:1.48!important}
+  .report-document-v203 .report-intervention-v203 .report-text-section{margin-top:4mm!important}
+  .report-document-v203 .report-components-v203 .report-table{margin:1.7mm 0 3mm!important;font-size:6.7pt!important}
+  .report-document-v203 .report-components-v203 .report-table th,.report-document-v203 .report-components-v203 .report-table td{padding:1.35mm 1.5mm!important}
+  .report-document-v203 .report-divider-v203{margin:3mm 0 2.5mm!important}
+
+  .report-document-v203 .report-signature-grid-v9{gap:5mm!important;margin:2.5mm 0 3.5mm!important}
+  .report-document-v203 .report-signature-card-v9{min-height:31mm!important;padding:1.5mm 1.2mm 1.6mm!important;grid-template-rows:auto 15mm auto auto auto!important;row-gap:1mm!important}
+  .report-document-v203 .report-signature-label-v9{min-height:3.5mm!important;font-size:5.8pt!important}
+  .report-document-v203 .report-signature-image-v9{height:15mm!important;min-height:15mm!important;margin:0 0 1mm!important;padding:0 1.5mm!important}
+  .report-document-v203 .report-signature-card-v9>strong{font-size:7.7pt!important;line-height:1.25!important;margin-top:.5mm!important}
+  .report-document-v203 .report-signature-card-v9>small{font-size:5.9pt!important;line-height:1.25!important}
+  .report-document-v203 .report-signature-note-v9{margin-top:1.8mm!important;padding:1.7mm 2mm!important;font-size:5.8pt!important;line-height:1.35!important}
+  .report-document-v203 .report-signature-safe-v203 .supervisor-title-v9{margin-top:3.5mm!important}
+
+  .proposal-document-v203 .report-page{padding:12mm 16mm 19mm!important}
+  .proposal-document-v203 .proposal-cover-v203{padding:14mm 17mm 18mm!important}
+  .proposal-cover-v203:before{width:46%!important}.proposal-cover-top-v203 img{width:37mm!important}
+  .proposal-cover-main-v203{width:55%!important;max-width:55%!important;margin-top:17mm!important}.proposal-cover-main-v203 h1{font-size:25pt!important;line-height:1.04!important}.proposal-cover-main-v203 p{font-size:10.5pt!important}
+  .proposal-cover-company-v203{width:55%!important;max-width:55%!important;margin-top:12mm!important;padding:4mm 4.5mm!important}.proposal-cover-company-v203 strong{font-size:13pt!important}
+  .proposal-cover-meta-v203{margin-top:6mm!important;gap:2mm!important}.proposal-cover-meta-v203>div{padding:2.5mm 2.8mm!important}
+  .proposal-cover-trust-v203{width:55%!important;margin-top:4.5mm!important;gap:1.8mm!important}.proposal-cover-trust-v203 span{padding:1.5mm 2.2mm!important;font-size:5.6pt!important}
+  .proposal-cover-message-v203{width:55%!important;max-width:55%!important;margin-top:4.2mm!important;font-size:6.8pt!important;line-height:1.45!important}.proposal-cover-v203 .developer-credit-v203{width:55%!important;margin-top:3.2mm!important}
+
+  .proposal-technical-v203,.proposal-commercial-v203{padding-top:11mm!important;padding-bottom:18mm!important}
+  .proposal-document-v203 .report-page-header{margin-bottom:3mm!important;padding-bottom:2mm!important}
+  .proposal-intro-v203{padding:3mm 3.5mm!important;margin-bottom:3mm!important}.proposal-intro-v203>strong{font-size:8.5pt!important}.proposal-intro-v203>p{font-size:6.7pt!important;line-height:1.45!important}
+  .proposal-context-v203{gap:2mm!important}.proposal-context-v203 article{padding:2mm 2.4mm!important}.proposal-context-v203 article p{font-size:5.8pt!important}
+  .proposal-numbered-v203{grid-template-columns:8mm 1fr!important;gap:2.6mm!important;margin-top:3mm!important}.proposal-numbered-v203>span{width:7.5mm!important;height:7.5mm!important;font-size:6.5pt!important}.proposal-numbered-v203 h2{font-size:8.3pt!important;margin-bottom:1mm!important}.proposal-numbered-v203 p{font-size:6.7pt!important;line-height:1.42!important}
+  .proposal-value-strip-v203{gap:2mm!important;margin-top:3mm!important}.proposal-value-strip-v203 article{padding:2.5mm!important}.proposal-value-strip-v203 strong{font-size:6.5pt!important}.proposal-value-strip-v203 p{font-size:5.5pt!important;line-height:1.35!important}
+  .proposal-journey-v203{gap:1.2mm!important;margin-top:2.6mm!important;padding:2mm!important}.proposal-journey-v203>div{padding:1.3mm 1.5mm!important}.proposal-journey-v203 span{font-size:5.2pt!important}.proposal-journey-v203 strong{font-size:6pt!important}.proposal-journey-v203 small{font-size:4.9pt!important}
+  .proposal-standard-v203{margin-top:2.6mm!important;padding:2.5mm 3mm!important}.proposal-standard-v203 h3{font-size:6.8pt!important}.proposal-standard-v203 ul{column-gap:5mm!important}.proposal-standard-v203 li{font-size:5.4pt!important;line-height:1.32!important;margin:.6mm 0!important}
+  .proposal-acceptance-criteria-v203{margin-top:2.4mm!important;padding:2.2mm 2.8mm!important}.proposal-acceptance-criteria-v203 strong{font-size:6.4pt!important}.proposal-acceptance-criteria-v203 p{font-size:5.4pt!important;line-height:1.35!important}
+
+  .proposal-commercial-lead-v203{margin-bottom:3mm!important;padding:2.6mm 3mm!important}.proposal-commercial-lead-v203 strong{font-size:7.8pt!important}.proposal-commercial-lead-v203 p{font-size:5.8pt!important;line-height:1.35!important}
+  .proposal-parts-table-v203{margin-bottom:2.5mm!important;font-size:6pt!important}.proposal-parts-table-v203 th,.proposal-parts-table-v203 td{padding:1.25mm 1.4mm!important}
+  .proposal-investment-v203{margin-top:2.7mm!important;gap:3mm!important}.proposal-investment-v203>div:first-child{padding:3.5mm!important}.proposal-investment-v203>div:first-child strong{font-size:17pt!important}.proposal-investment-v203 .budget-summary-table-v11{padding:2mm 2.6mm!important}.proposal-investment-v203 .budget-summary-table-v11>div{padding:1mm 0!important;font-size:6pt!important}
+  .proposal-conditions-grid-v203{margin-top:2.7mm!important;gap:2mm!important}.proposal-conditions-grid-v203 article{padding:2mm 2.4mm!important}.proposal-conditions-grid-v203 strong{font-size:6.3pt!important}.proposal-conditions-grid-v203 small{font-size:5pt!important}
+  .proposal-note-v203{margin-top:2mm!important;padding:2mm 2.5mm!important}.proposal-next-step-v203{margin-top:2.5mm!important;padding:2.5mm 3mm!important}.proposal-next-step-v203 strong{font-size:6.8pt!important}.proposal-next-step-v203 p{font-size:5.4pt!important;line-height:1.32!important}
+  .proposal-acceptance-v203{margin-top:2.4mm!important;padding:2.4mm 2.8mm!important;gap:3mm!important;grid-template-columns:.9fr 1.5fr!important}.proposal-acceptance-v203>div:first-child p{font-size:5.2pt!important}.proposal-signatures-v203{gap:3mm!important}.proposal-signatures-v203>div{height:11mm!important;min-height:11mm!important;padding-bottom:1mm!important}.proposal-signatures-v203 span{font-size:5pt!important}
+  .proposal-commercial-v203 .developer-credit-v203{margin-top:2mm!important}
+}
+
+/* V20.2.3b — refinamento final de distribuição vertical do relatório */
+.report-document-v203 .report-intervention-v203 .report-intervention-body-v203{
+  flex:1 1 auto;
+  min-height:590px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:18px;
+  padding:4px 0 12px;
+}
+.report-document-v203 .report-intervention-v203 .report-intervention-body-v203>.report-text-section{
+  margin:0!important;
+}
+.report-document-v203 .report-intervention-v203 .report-intervention-body-v203>.report-text-section:not(.conclusion):not(.recommendations){
+  padding:10px 0 11px!important;
+}
+.report-document-v203 .report-identification-v203 .report-standard-note{
+  margin-top:18px!important;
+}
+
+/* Entregáveis: conteúdo comercial concreto, sem texto publicitário genérico. */
+.proposal-deliverables-v203{
+  margin-top:11px;
+  padding:11px 13px 12px;
+  border:1px solid #e0dadd;
+  border-radius:11px;
+  background:#fbfafb;
+}
+.proposal-deliverables-v203>span{
+  display:block;
+  margin-bottom:8px;
+  color:var(--proposal-red-dark);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.11em;
+}
+.proposal-deliverables-v203>div{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.proposal-deliverables-v203 article{
+  min-width:0;
+  padding:0 10px 0 0;
+  border-right:1px solid #e2dde0;
+}
+.proposal-deliverables-v203 article:last-child{border-right:0;padding-right:0}
+.proposal-deliverables-v203 strong{display:block;font-size:8.7px;line-height:1.3;color:#292629}
+.proposal-deliverables-v203 p{margin:4px 0 0;font-size:7.4px;line-height:1.4;color:#696468}
+
+@media(max-width:760px){
+  .proposal-deliverables-v203>div{grid-template-columns:1fr}
+  .proposal-deliverables-v203 article{border-right:0;border-bottom:1px solid #e2dde0;padding:0 0 8px}
+  .proposal-deliverables-v203 article:last-child{border-bottom:0;padding-bottom:0}
+}
+
+@media print{
+  .report-document-v203 .report-intervention-v203 .report-intervention-body-v203{
+    min-height:171mm!important;
+    gap:5mm!important;
+    padding:1mm 0 3mm!important;
+  }
+  .report-document-v203 .report-intervention-v203 .report-intervention-body-v203>.report-text-section:not(.conclusion):not(.recommendations){
+    padding:2.8mm 0 3mm!important;
+  }
+  .report-document-v203 .report-identification-v203 .report-standard-note{margin-top:4.5mm!important}
+
+  .proposal-intro-v203>strong{font-size:9pt!important}
+  .proposal-intro-v203>p{font-size:7.1pt!important;line-height:1.48!important}
+  .proposal-context-v203 article strong{font-size:7.2pt!important}
+  .proposal-context-v203 article p{font-size:5.9pt!important}
+  .proposal-numbered-v203 h2{font-size:8.6pt!important}
+  .proposal-numbered-v203 p{font-size:7pt!important;line-height:1.45!important}
+  .proposal-value-strip-v203 strong{font-size:6.8pt!important}
+  .proposal-value-strip-v203 p{font-size:5.8pt!important}
+  .proposal-standard-v203 li{font-size:5.7pt!important;line-height:1.38!important}
+  .proposal-acceptance-criteria-v203 p{font-size:5.7pt!important;line-height:1.38!important}
+  .proposal-deliverables-v203{margin-top:2.6mm!important;padding:2.5mm 3mm 2.8mm!important}
+  .proposal-deliverables-v203>span{margin-bottom:1.8mm!important;font-size:5.4pt!important}
+  .proposal-deliverables-v203>div{gap:2.6mm!important}
+  .proposal-deliverables-v203 article{padding-right:2.5mm!important}
+  .proposal-deliverables-v203 strong{font-size:6.2pt!important}
+  .proposal-deliverables-v203 p{font-size:5.2pt!important;line-height:1.35!important}
+}
+
+/* A página 1-3 também ocupa o A4 com ritmo regular, sem deixar o item 3 perdido no topo. */
+.report-document-v203 .report-identification-v203 .report-identification-body-v203{
+  flex:1 1 auto;
+  min-height:570px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:16px;
+  padding:5px 0 12px;
+}
+.report-document-v203 .report-identification-v203 .report-identification-body-v203>.report-text-section,
+.report-document-v203 .report-identification-v203 .report-identification-body-v203>.report-standard-note{
+  margin:0!important;
+}
+@media print{
+  .report-document-v203 .report-identification-v203 .report-identification-body-v203{
+    min-height:150mm!important;
+    gap:4.5mm!important;
+    padding:1.2mm 0 3mm!important;
+  }
+}
+@media print{
+  .report-document-v203>.report-page:last-child,
+  .report-document-v203>.report-photo-page-v2021:last-child{
+    page-break-after:auto!important;
+    break-after:auto!important;
+  }
+}

@@ -3,7 +3,7 @@
 
   const DB_KEY = 'ar7-oficina-db-v2';
   const APP_VERSION = 20.2;
-  const APP_RELEASE = '20.2.2';
+  const APP_RELEASE = '20.2.3';
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -2284,38 +2284,50 @@
   }
 
   const proposalDocumentBeforeV12=proposalDocumentV11;
+  const SOFTWARE_STUDIO_V203={name:'Nexora Sistemas',tagline:'Tecnologia que organiza operações.'};
+  function developerCreditV203(context='Plataforma e experiência digital'){
+    return `<div class="developer-credit-v203"><span>${safe(context)}</span><span class="developer-credit-by-v203">Desenvolvido por</span><strong>${safe(SOFTWARE_STUDIO_V203.name)}</strong><small>${safe(SOFTWARE_STUDIO_V203.tagline)}</small></div>`;
+  }
   proposalDocumentV11=function(order){
     const budget=ensureBudgetV11(order),totals=budgetTotalsV11(order),client=getClient(order.clientId),eq=getEquipment(order.equipmentId),today=new Intl.DateTimeFormat('pt-BR').format(new Date());
-    const partRows=(order.parts||[]).map((part,index)=>{const quote=selectedQuoteV11(part);return `<tr><td>${index+1}</td><td><strong>${safe(part.name)}</strong><br><small>${safe(part.position||'Aplicação conforme desmontagem')}</small></td><td>${safe(part.code||'—')}</td><td>${safe(part.dimensions||'—')}</td><td>${safe(partQuantity(part))}</td><td>${safe(quote?.brand||'Conforme especificação técnica')}</td></tr>`;}).join('');
-    const diagnosis=safe(order.records?.diagnosis||'Avaliação técnica realizada conforme as condições apresentadas pelo equipamento no momento da desmontagem.');
-    const scope=safe(budget.technicalScope||'Execução dos serviços corretivos necessários para restabelecer as condições operacionais do equipamento.');
-    const notes=budget.commercialNotes?`<div class="proposal-note-v12"><strong>Observações comerciais</strong><p>${safe(budget.commercialNotes)}</p></div>`:'';
-    return `<div class="report-document proposal-document-v11 proposal-document-v12" id="printable-report">
-      <section class="report-page proposal-cover-v12">
-        <div class="proposal-cover-top-v12"><img src="./assets/ar7-logo.png" alt="AR7 Elétrica"><div><span>PROPOSTA TÉCNICO-COMERCIAL</span><strong>${safe(budget.proposalCode)}</strong></div></div>
-        <div class="proposal-cover-main-v12"><div class="proposal-cover-line-v12"></div><span>MANUTENÇÃO ELETROMECÂNICA INDUSTRIAL</span><h1>${safe(equipmentDescription(eq))}</h1><p>Ordem de Serviço ${safe(order.number)}</p></div>
-        <div class="proposal-cover-company-v12"><small>PROPOSTA PREPARADA PARA</small><strong>${safe(client?.name||'Cliente')}</strong><span>${safe(eq?.tag||'Equipamento sem TAG')} · ${safe(eq?.serial||'Número de série não informado')}</span></div>
-        <div class="proposal-cover-meta-v12"><div><small>Emissão</small><strong>${today}</strong></div><div><small>Validade</small><strong>${formatDate(budget.validUntil)}</strong></div><div><small>Revisão</small><strong>R${String(budget.revision).padStart(2,'0')}</strong></div><div><small>Atendimento</small><strong>${safe(budget.billingType)}</strong></div></div>
-        <div class="proposal-cover-message-v12">Soluções técnicas com rastreabilidade, segurança e compromisso com a disponibilidade dos seus ativos.</div>
-        <div class="report-footer"><span>AR7 Elétrica · Documento comercial controlado</span><span>${safe(budget.proposalCode)}</span></div>
+    const partRows=(order.parts||[]).map((part,index)=>{const quote=selectedQuoteV11(part);return `<tr><td>${index+1}</td><td><strong>${safe(part.name)}</strong><br><small>${safe(part.position||'Aplicação conforme desmontagem')}</small></td><td>${safe(part.code||'—')}</td><td>${safe(part.dimensions||'—')}</td><td>${safe(partQuantity(part))}</td><td>${safe(quote?.brand||quote?.supplier||'Conforme especificação técnica')}</td></tr>`;}).join('');
+    const diagnosis=safe(order.records?.diagnosis||'A avaliação técnica foi realizada a partir das condições apresentadas pelo equipamento no recebimento e durante a desmontagem. Os pontos identificados orientam o escopo recomendado nesta proposta.');
+    const scope=safe(budget.technicalScope||'Execução dos serviços corretivos e das verificações necessárias para restabelecer condições adequadas de funcionamento, com registros vinculados à Ordem de Serviço.');
+    const notes=budget.commercialNotes?`<div class="proposal-note-v12 proposal-note-v203"><strong>Observações comerciais</strong><p>${safe(budget.commercialNotes)}</p></div>`:'';
+    const contactLine=[client?.contact,client?.email].filter(Boolean).map(safe).join(' · ')||'Contato comercial não informado';
+    return `<div class="report-document proposal-document-v11 proposal-document-v12 proposal-document-v203" id="printable-report">
+      <section class="report-page proposal-cover-v12 proposal-cover-v203">
+        <div class="proposal-cover-top-v12 proposal-cover-top-v203"><img src="./assets/ar7-logo.png" alt="AR7 Elétrica"><div><span>PROPOSTA TÉCNICO-COMERCIAL</span><strong>${safe(budget.proposalCode)}</strong></div></div>
+        <div class="proposal-cover-main-v12 proposal-cover-main-v203"><div class="proposal-cover-line-v12"></div><span>SOLUÇÃO TÉCNICA PARA MANUTENÇÃO ELETROMECÂNICA</span><h1>${safe(equipmentDescription(eq))}</h1><p>Confiabilidade para o equipamento. Clareza para a sua decisão.</p></div>
+        <div class="proposal-cover-company-v12 proposal-cover-company-v203"><small>PROPOSTA PREPARADA PARA</small><strong>${safe(client?.name||'Empresa contratante')}</strong><span>${safe(eq?.tag||'Equipamento sem TAG')} · ${safe(eq?.serial||'Número de série não informado')}</span></div>
+        <div class="proposal-cover-meta-v12 proposal-cover-meta-v203"><div><small>Emissão</small><strong>${today}</strong></div><div><small>Validade</small><strong>${formatDate(budget.validUntil)}</strong></div><div><small>Revisão</small><strong>R${String(budget.revision).padStart(2,'0')}</strong></div><div><small>Atendimento</small><strong>${safe(budget.billingType)}</strong></div></div>
+        <div class="proposal-cover-trust-v203"><span>Diagnóstico rastreável</span><span>Execução documentada</span><span>Validação técnica</span></div>
+        <div class="proposal-cover-message-v12 proposal-cover-message-v203">Esta proposta transforma o diagnóstico da OS ${safe(order.number)} em um plano de execução objetivo: o que será feito, quais materiais estão previstos, quanto será investido e quais critérios serão usados antes da liberação do equipamento.</div>
+        ${developerCreditV203('Sistema de gestão e documentos')}
+        <div class="report-footer"><span>AR7 Elétrica · Documento comercial controlado</span><span>${safe(budget.proposalCode)} · 1/3</span></div>
       </section>
-      <section class="report-page proposal-technical-v12">
-        <div class="report-page-header"><img src="./assets/ar7-logo.png" alt="AR7"><div><span>${safe(budget.proposalCode)}</span><strong>Diagnóstico e escopo técnico</strong></div></div>
-        <div class="proposal-intro-v12"><strong>À ${safe(client?.name||'empresa contratante')},</strong><p>A AR7 Elétrica apresenta esta proposta para execução dos serviços descritos abaixo, elaborada a partir da inspeção e desmontagem do equipamento recebido. O objetivo é restabelecer as condições adequadas de funcionamento, respeitando os critérios técnicos aplicáveis e a rastreabilidade da Ordem de Serviço.</p></div>
-        <div class="report-info-grid"><article><span>Equipamento</span><strong>${safe(equipmentDescription(eq))}</strong><p>${safe(eq?.tag||'Sem TAG')} · ${safe(eq?.manufacturer||'Fabricante não informado')} · ${safe(eq?.power||'Potência não informada')}</p></article><article><span>Solicitação original</span><strong>OS ${safe(order.number)}</strong><p>${safe(order.defect||'Defeito informado não registrado.')}</p></article></div>
-        <div class="proposal-numbered-v12"><span>01</span><div><h2>Diagnóstico técnico</h2><p>${diagnosis}</p></div></div>
-        <div class="proposal-numbered-v12"><span>02</span><div><h2>Escopo proposto</h2><p>${scope}</p></div></div>
-        <div class="proposal-standard-v12"><h3>Premissas de execução</h3><ul><li>Os serviços serão executados por equipe técnica qualificada, com registros fotográficos e rastreabilidade por OS.</li><li>Componentes adicionais identificados após a aprovação serão comunicados antes de qualquer alteração de valor ou prazo.</li><li>Os testes finais serão realizados conforme os recursos disponíveis e as características do equipamento.</li><li>O prazo inicia após a aprovação formal e a disponibilidade integral dos materiais necessários.</li></ul></div>
-        <div class="proposal-deliverables-v12"><article><span>01</span><div><strong>Execução controlada</strong><p>Desmontagem, intervenção, montagem e inspeções registradas na Ordem de Serviço.</p></div></article><article><span>02</span><div><strong>Verificação final</strong><p>Testes compatíveis com o equipamento e conferência dos itens previstos no escopo.</p></div></article><article><span>03</span><div><strong>Documentação técnica</strong><p>Relatório final com serviços, materiais, medições aplicáveis, fotos e responsáveis.</p></div></article></div>
-        <div class="proposal-acceptance-criteria-v12"><strong>Critério de aceite técnico</strong><p>O equipamento será considerado liberado após a conclusão do escopo contratado, avaliação dos testes finais e aprovação do responsável técnico da AR7 Elétrica. Eventuais limitações encontradas serão registradas no relatório de conclusão.</p></div>
-        <div class="report-footer"><span>AR7 Elétrica · Escopo técnico</span><span>${safe(budget.proposalCode)} · 2/3</span></div>
+      <section class="report-page proposal-technical-v12 proposal-technical-v203">
+        <div class="report-page-header"><img src="./assets/ar7-logo.png" alt="AR7"><div><span>${safe(budget.proposalCode)}</span><strong>Entendimento técnico e solução recomendada</strong></div></div>
+        <div class="proposal-intro-v12 proposal-intro-v203"><span>UMA PROPOSTA CONSTRUÍDA SOBRE O QUE FOI ENCONTRADO</span><strong>Objetivo claro: recuperar confiabilidade sem perder rastreabilidade.</strong><p>Esta proposta foi preparada a partir das informações registradas na OS ${safe(order.number)} e da avaliação do equipamento ${safe(equipmentDescription(eq))}. A recomendação abaixo reúne somente o necessário para tratar as condições identificadas, validar o resultado e devolver ao cliente um histórico técnico consistente do serviço.</p></div>
+        <div class="report-info-grid proposal-context-v203"><article><span>Empresa atendida</span><strong>${safe(client?.name||'—')}</strong><p>${contactLine}</p></article><article><span>Equipamento</span><strong>${safe(equipmentDescription(eq))}</strong><p>${safe(eq?.tag||'Sem TAG')} · ${safe(eq?.manufacturer||'Fabricante não informado')} · ${safe(eq?.power||'Potência não informada')}</p></article><article><span>Solicitação registrada</span><strong>OS ${safe(order.number)}</strong><p>${safe(order.defect||'Defeito informado não registrado.')}</p></article><article><span>Referência comercial</span><strong>${safe(budget.proposalCode)}</strong><p>Revisão R${String(budget.revision).padStart(2,'0')} · validade ${formatDate(budget.validUntil)}</p></article></div>
+        <div class="proposal-numbered-v12 proposal-numbered-v203"><span>01</span><div><h2>Condição identificada</h2><p>${diagnosis}</p></div></div>
+        <div class="proposal-numbered-v12 proposal-numbered-v203"><span>02</span><div><h2>Solução recomendada</h2><p>${scope}</p></div></div>
+        <div class="proposal-value-strip-v203"><article><strong>Intervenção rastreável</strong><p>Cada etapa fica vinculada à OS, reduzindo dúvidas sobre o que foi executado e por quem.</p></article><article><strong>Validação antes da liberação</strong><p>Testes e verificações finais são registrados antes da conclusão técnica do serviço.</p></article><article><strong>Entrega documentada</strong><p>O cliente recebe relatório técnico com materiais, medições aplicáveis, fotos e responsáveis.</p></article></div>
+        <div class="proposal-journey-v203"><div><span>01</span><strong>Confirmar escopo</strong><small>Aprovação formal da proposta</small></div><div><span>02</span><strong>Executar</strong><small>Intervenção e registros por OS</small></div><div><span>03</span><strong>Validar</strong><small>Testes e conferência técnica</small></div><div><span>04</span><strong>Documentar</strong><small>Relatório e histórico do ativo</small></div></div>
+        <div class="proposal-standard-v12 proposal-standard-v203"><h3>Compromissos de execução</h3><ul><li>Qualquer necessidade adicional que altere valor, material ou prazo será comunicada antes da execução.</li><li>Os serviços serão registrados na OS com evidências compatíveis com a intervenção realizada.</li><li>Os testes finais serão conduzidos conforme as características do equipamento e os recursos técnicos aplicáveis.</li><li>O prazo de execução começa após a aprovação formal e a disponibilidade dos materiais necessários.</li></ul></div>
+        <div class="proposal-acceptance-criteria-v12 proposal-acceptance-criteria-v203"><strong>Critério de liberação técnica</strong><p>O equipamento será liberado após a conclusão do escopo aprovado, a avaliação dos testes finais e a revisão do responsável técnico da AR7 Elétrica. Eventuais limitações ou recomendações de operação serão registradas no relatório de conclusão.</p></div>
+        <div class="proposal-deliverables-v203"><span>AO FINAL, O CLIENTE RECEBE</span><div><article><strong>Relatório técnico final</strong><p>Diagnóstico, serviços, testes, conclusão e recomendações reunidos em um documento controlado.</p></article><article><strong>Evidências da intervenção</strong><p>Fotos e registros técnicos vinculados à OS para facilitar consulta, auditoria e comunicação interna.</p></article><article><strong>Histórico do equipamento</strong><p>Componentes, responsáveis e revisões preservados para apoiar futuras decisões de manutenção.</p></article></div></div>
+        <div class="report-footer"><span>AR7 Elétrica · Solução técnica</span><span>${safe(budget.proposalCode)} · 2/3</span></div>
       </section>
-      <section class="report-page proposal-commercial-v12">
-        <div class="report-page-header"><img src="./assets/ar7-logo.png" alt="AR7"><div><span>${safe(budget.proposalCode)}</span><strong>Materiais, investimento e condições</strong></div></div>
-        <h2 class="report-section-title">Materiais e componentes previstos</h2><table class="report-table proposal-parts-table-v12"><thead><tr><th>#</th><th>Item / aplicação</th><th>Código</th><th>Medidas</th><th>Quantidade</th><th>Referência</th></tr></thead><tbody>${partRows||'<tr><td colspan="6">O escopo não prevê fornecimento de peças nesta etapa.</td></tr>'}</tbody></table>
-        <div class="proposal-investment-v12"><div><span>INVESTIMENTO TOTAL</span><strong>${moneyV11(totals.total)}</strong><small>Valores conforme escopo e condições desta proposta.</small></div>${budgetSummaryTableV11(order,true)}</div>
-        <div class="proposal-conditions-grid-v12"><article><span>Condição de pagamento</span><strong>${safe(budget.paymentTerms)}</strong></article><article><span>Prazo estimado</span><strong>${safe(budget.executionDays)} dias úteis</strong><small>Após aprovação e disponibilidade dos materiais.</small></article><article><span>Validade da proposta</span><strong>${formatDate(budget.validUntil)}</strong></article><article><span>Garantia</span><strong>${safe(budget.warranty)}</strong></article></div>${notes}
-        <div class="proposal-acceptance-v12"><div><span>ACEITE DA PROPOSTA</span><p>O aceite autoriza a AR7 Elétrica a executar o escopo e adquirir os materiais descritos. Alterações posteriores deverão ser formalizadas por nova revisão.</p></div><div class="proposal-signatures-v12"><div><span>Nome e função</span></div><div><span>Data</span></div><div><span>Assinatura / autorização</span></div></div></div>
+      <section class="report-page proposal-commercial-v12 proposal-commercial-v203">
+        <div class="report-page-header"><img src="./assets/ar7-logo.png" alt="AR7"><div><span>${safe(budget.proposalCode)}</span><strong>Investimento, materiais e condições</strong></div></div>
+        <div class="proposal-commercial-lead-v203"><span>INVESTIMENTO PARA EXECUÇÃO DO ESCOPO</span><strong>Valores transparentes e condições definidas antes do início do serviço.</strong><p>Os itens abaixo correspondem ao escopo apresentado nesta revisão. Qualquer alteração necessária durante a execução será submetida à aprovação antes de gerar impacto comercial.</p></div>
+        <h2 class="report-section-title">Materiais e componentes previstos</h2><table class="report-table proposal-parts-table-v12 proposal-parts-table-v203"><thead><tr><th>#</th><th>Item / aplicação</th><th>Código</th><th>Medidas</th><th>Quantidade</th><th>Referência</th></tr></thead><tbody>${partRows||'<tr><td colspan="6">O escopo desta revisão não prevê fornecimento de peças.</td></tr>'}</tbody></table>
+        <div class="proposal-investment-v12 proposal-investment-v203"><div><span>INVESTIMENTO TOTAL</span><strong>${moneyV11(totals.total)}</strong><small>Valor correspondente ao escopo, materiais e condições desta revisão.</small></div>${budgetSummaryTableV11(order,true)}</div>
+        <div class="proposal-conditions-grid-v12 proposal-conditions-grid-v203"><article><span>Condição de pagamento</span><strong>${safe(budget.paymentTerms)}</strong></article><article><span>Prazo estimado</span><strong>${safe(budget.executionDays)} dias úteis</strong><small>Contados após aprovação e disponibilidade integral dos materiais.</small></article><article><span>Validade da proposta</span><strong>${formatDate(budget.validUntil)}</strong></article><article><span>Garantia</span><strong>${safe(budget.warranty)}</strong></article></div>${notes}
+        <div class="proposal-next-step-v203"><div><span>PRÓXIMO PASSO</span><strong>Aprovar esta revisão para liberar o planejamento do serviço.</strong><p>Com o aceite, a AR7 Elétrica fica autorizada a executar o escopo descrito e adquirir os materiais previstos. Qualquer mudança posterior deverá ser formalizada em nova revisão para manter o histórico comercial íntegro.</p></div></div>
+        <div class="proposal-acceptance-v12 proposal-acceptance-v203"><div><span>ACEITE DA PROPOSTA</span><p>Confirmação da empresa contratante referente à revisão ${safe(budget.proposalCode)}.</p></div><div class="proposal-signatures-v12 proposal-signatures-v203"><div><span>Nome e função</span></div><div><span>Data</span></div><div><span>Assinatura / autorização</span></div></div></div>
+        ${developerCreditV203('Plataforma AR7')}
         <div class="report-footer"><span>AR7 Elétrica · Condições comerciais</span><span>${safe(budget.proposalCode)} · 3/3</span></div>
       </section>
     </div>`;
@@ -3173,7 +3185,7 @@
       return true;
     }catch(error){console.warn('Não foi possível aplicar o reset controlado das OS da V19.',error);return false;}
   }
-  // V20.2.2: não apague OS automaticamente em um navegador novo. O reset permanece somente como ação explícita em Configurações.
+  // V20.2.3: não apague OS automaticamente em um navegador novo. O reset permanece somente como ação explícita em Configurações.
 
 
   function monthSeriesV19(count=6){
@@ -3299,7 +3311,7 @@
     const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local',conflict:'Conflito de edição — toque para recarregar'};
     badge.className=`sync-badge-v20 ${state}`;
     badge.textContent=message||labels[state]||state;
-    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.2 — sincronização entre dispositivos';
+    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.3 — sincronização entre dispositivos';
     badge.dataset.conflict=state==='conflict'?'1':'0';
   }
 
@@ -3765,7 +3777,7 @@
   };
 
   /* =========================
-     AR7 V20.2.2 — relatório compacto + fotos separadas por etapa
+     AR7 V20.2.3 — relatório compacto + fotos separadas por etapa
      ========================= */
   function reportPhotoSectionV2021(title,photos,orderNumber){
     const normalized=(photos||[]).map(photo=>{
@@ -3781,12 +3793,12 @@
 
   reportPhotoSection=reportPhotoSectionV2021;
 
-  function compactTechnicalReportV2021(order){
+  function balancedTechnicalReportV203(order){
     const template=document.createElement('template');
     template.innerHTML=reportDocumentBeforeV202(order).trim();
     const root=template.content.querySelector('.report-document');
     if(!root)return template.innerHTML;
-    root.classList.add('report-document-v2021');
+    root.classList.add('report-document-v2021','report-document-v203');
 
     let pages=[...root.querySelectorAll(':scope > .report-page')];
     const cover=pages[0]||null;
@@ -3794,62 +3806,96 @@
     const intervention=pages[2]||null;
     const components=pages[3]||null;
     const signatures=pages[4]||null;
+    const texts=professionalReportTextV7(order);
 
-    // A página de identificação recebia pouco conteúdo. O diagnóstico passa a ocupar
-    // o espaço útil da mesma página, sem alterar a ordem ou o conteúdo técnico.
+    function footerAnchorV203(page){return page?.querySelector('.report-footer')||null;}
+    function insertBeforeFooterV203(page,node){
+      if(!page||!node)return;
+      const footer=footerAnchorV203(page);
+      if(footer)footer.before(node);else page.appendChild(node);
+    }
+    function moveSectionV203(section,target,beforeNode){
+      if(!section||!target)return;
+      if(beforeNode)beforeNode.before(section);else insertBeforeFooterV203(target,section);
+      section.classList.add('report-balanced-section-v203');
+    }
+
+    // Equilíbrio das páginas técnicas: 1, 2 e 3 ficam juntos na identificação,
+    // eliminando a página praticamente vazia do diagnóstico. Os itens 4, 5, 6 e 7
+    // permanecem na página seguinte, porém dentro de um corpo flexível que distribui
+    // o espaço vertical de forma uniforme em vez de empilhar tudo no topo.
     if(identification&&intervention){
-      const diagnosisSection=intervention.querySelector('.report-text-section');
+      const sections=[...intervention.querySelectorAll(':scope > .report-text-section')];
+      const sectionByNumber=number=>sections.find(section=>String(section.querySelector('h2')?.textContent||'').trim().startsWith(`${number}.`));
+      const diagnosisSection=sectionByNumber(3)||sections[0]||null;
       const identificationNote=identification.querySelector('.report-standard-note');
-      if(diagnosisSection){
-        if(identificationNote)identificationNote.before(diagnosisSection);
-        else identification.querySelector('.report-footer')?.before(diagnosisSection);
-      }
+      moveSectionV203(diagnosisSection,identification,identificationNote);
+
       const idTitle=identification.querySelector('.report-page-header strong');
       if(idTitle)idTitle.textContent='Identificação, critérios e diagnóstico';
       const interventionTitle=intervention.querySelector('.report-page-header strong');
-      if(interventionTitle)interventionTitle.textContent='Intervenção, testes e conclusão';
-      identification.classList.add('report-compact-page-v2021');
-      intervention.classList.add('report-compact-page-v2021');
+      if(interventionTitle)interventionTitle.textContent='Serviços, testes e conclusão';
+      identification.classList.add('report-compact-page-v2021','report-balanced-page-v203','report-identification-v203');
+      intervention.classList.add('report-compact-page-v2021','report-balanced-page-v203','report-intervention-v203');
+
+      const identificationSections=[...identification.querySelectorAll(':scope > .report-text-section')];
+      const identificationBody=document.createElement('div');
+      identificationBody.className='report-identification-body-v203';
+      identificationSections.forEach(section=>identificationBody.appendChild(section));
+      if(identificationNote)identificationBody.appendChild(identificationNote);
+      const identificationFooter=identification.querySelector('.report-footer');
+      if(identificationFooter)identificationFooter.before(identificationBody);else identification.appendChild(identificationBody);
+
+      const remainingSections=[...intervention.querySelectorAll(':scope > .report-text-section')];
+      if(remainingSections.length){
+        const body=document.createElement('div');
+        body.className='report-intervention-body-v203';
+        const footer=intervention.querySelector('.report-footer');
+        remainingSections.forEach(section=>body.appendChild(section));
+        if(footer)footer.before(body);else intervention.appendChild(body);
+      }
     }
 
-    // Ocupação adaptativa: em relatórios curtos, componentes, medições e assinaturas
-    // completam a página de intervenção. Se houver mais dados, componentes +
-    // assinaturas compartilham a página seguinte. Só relatórios realmente extensos
-    // mantêm uma página exclusiva de assinaturas.
     const partRows=(order.parts||[]).length;
     const measurementRows=(order.measurements||[]).length;
     const technicianSignatures=ensureSignaturesV9(order).technicians.length||1;
-    const reportTexts=professionalReportTextV7(order);
-    const interventionChars=['assembly','tests','conclusion','recommendations'].reduce((sum,key)=>sum+String(reportTexts[key]||'').length,0);
-    const canMergeEverything=(partRows+measurementRows)<=4&&technicianSignatures<=2&&interventionChars<=1000;
-    const canMergeSignatures=(partRows+measurementRows)<=8&&technicianSignatures<=3;
 
-    function movePageBodyBeforeFooterV2021(source,target,dividerClass='report-compact-divider-v2021'){
+    function movePageBodyBeforeFooterV203(source,target,dividerClass='report-compact-divider-v2021'){
       if(!source||!target)return;
       const targetFooter=target.querySelector('.report-footer');
       const sourceHeader=source.querySelector('.report-page-header');
       const sourceFooter=source.querySelector('.report-footer');
       const moving=[...source.children].filter(node=>node!==sourceHeader&&node!==sourceFooter);
-      const divider=document.createElement('div');divider.className=dividerClass;
+      const divider=document.createElement('div');divider.className=`${dividerClass} report-divider-v203`;
       if(targetFooter)targetFooter.before(divider);else target.appendChild(divider);
       moving.forEach(node=>targetFooter?targetFooter.before(node):target.appendChild(node));
       source.remove();
     }
 
-    if(intervention&&components&&signatures&&canMergeEverything){
-      movePageBodyBeforeFooterV2021(components,intervention,'report-compact-divider-v2021 tables-divider-v2021');
-      movePageBodyBeforeFooterV2021(signatures,intervention,'report-compact-divider-v2021 signatures-divider-v2021');
-      intervention.classList.add('report-has-signatures-v2021','report-has-tables-v2021','report-compact-page-v2021');
-      const interventionTitle=intervention.querySelector('.report-page-header strong');
-      if(interventionTitle)interventionTitle.textContent='Intervenção, resultados e responsáveis';
-    }else if(components&&signatures&&canMergeSignatures){
-      movePageBodyBeforeFooterV2021(signatures,components,'report-compact-divider-v2021 signatures-divider-v2021');
-      components.classList.add('report-has-signatures-v2021','report-compact-page-v2021');
-      const componentTitle=components.querySelector('.report-page-header strong');
-      if(componentTitle)componentTitle.textContent='Componentes, medições e responsáveis';
-    }else{
-      components?.classList.add('report-compact-page-v2021');
-      signatures?.classList.add('report-compact-page-v2021');
+    // Componentes e medições mantêm página própria. Assinaturas só compartilham
+    // essa página em relatórios realmente curtos, evitando nomes/assinaturas
+    // comprimidos ou sobrepostos no rodapé.
+    const canMergeSignatures=Boolean(components&&signatures&&(partRows+measurementRows)<=5&&technicianSignatures<=2);
+    if(components){
+      components.classList.add('report-compact-page-v2021','report-balanced-page-v203','report-components-v203');
+      const title=components.querySelector('.report-page-header strong');
+      if(title)title.textContent=canMergeSignatures?'Componentes, medições e responsáveis':'Componentes, medições e resultados';
+    }
+    if(canMergeSignatures){
+      movePageBodyBeforeFooterV203(signatures,components,'report-compact-divider-v2021 signatures-divider-v2021');
+      components.classList.add('report-has-signatures-v2021','report-signature-safe-v203');
+    }else if(signatures){
+      signatures.classList.add('report-compact-page-v2021','report-balanced-page-v203','report-signature-safe-v203');
+    }
+
+    // Crédito discreto da empresa responsável pela plataforma, sem competir com
+    // a identidade da AR7 nem com o conteúdo técnico do documento.
+    const creditTarget=(canMergeSignatures?components:signatures)||components;
+    if(creditTarget){
+      const wrapper=document.createElement('div');
+      wrapper.innerHTML=developerCreditV203('Plataforma de gestão e documentos');
+      const credit=wrapper.firstElementChild;
+      if(credit)insertBeforeFooterV203(creditTarget,credit);
     }
 
     pages=[...root.querySelectorAll(':scope > .report-page')];
@@ -3857,18 +3903,15 @@
     return template.innerHTML;
   }
 
-  reportDocumentV5=compactTechnicalReportV2021;
+  reportDocumentV5=balancedTechnicalReportV203;
 
   reportPageCount=function(order){
     const photoPages=['before','during','assembly','after'].reduce((sum,key)=>sum+Math.ceil((order.photos?.[key]?.length||0)/4),0);
     const partRows=(order.parts||[]).length;
     const measurementRows=(order.measurements||[]).length;
     const technicianSignatures=ensureSignaturesV9(order).technicians.length||1;
-    const texts=professionalReportTextV7(order);
-    const interventionChars=['assembly','tests','conclusion','recommendations'].reduce((sum,key)=>sum+String(texts[key]||'').length,0);
-    const compactAll=(partRows+measurementRows)<=4&&technicianSignatures<=2&&interventionChars<=1000;
-    const compactSignatures=(partRows+measurementRows)<=8&&technicianSignatures<=3;
-    const textPages=compactAll?3:(compactSignatures?4:5);
+    const signaturesShareComponents=(partRows+measurementRows)<=5&&technicianSignatures<=2;
+    const textPages=signaturesShareComponents?4:5;
     return textPages+photoPages;
   };
 
