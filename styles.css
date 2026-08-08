@@ -1318,3 +1318,292 @@ textarea.auto-grow-v202,
   .report-signature-grid-v9{gap:5mm!important;margin:1.5mm 0 2.5mm!important}
   .report-signature-card-v9{padding:.5mm!important;min-height:26mm!important}
 }
+
+/* ============================================================
+   AR7 V20.2.1 - Relatório compacto e fotos separadas por etapa
+   Mantém a identidade visual atual; altera somente ocupação/espaço.
+   ============================================================ */
+.report-document-v2021 .report-compact-page-v2021{
+  padding-top:34px!important;
+  padding-bottom:54px!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-page-header{
+  margin-bottom:13px!important;
+  padding-bottom:8px!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-info-grid{
+  gap:7px!important;
+  margin-bottom:0!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-info-grid article{
+  padding:8px 10px!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-text-section{
+  margin-top:10px!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-text-section h2,
+.report-document-v2021 .report-compact-page-v2021 .report-section-title{
+  margin:0 0 5px!important;
+  padding-bottom:5px!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-text-section p{
+  line-height:1.48!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-standard-note{
+  margin-top:10px!important;
+  padding:7px 9px!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-table{
+  margin:5px 0 9px!important;
+}
+.report-document-v2021 .report-compact-page-v2021 .report-table th,
+.report-document-v2021 .report-compact-page-v2021 .report-table td{
+  padding:5px 6px!important;
+}
+.report-compact-divider-v2021{
+  height:1px;
+  margin:9px 0 7px;
+  background:#ddd8db;
+}
+.report-has-signatures-v2021 .report-text-section{
+  margin-top:7px!important;
+}
+.report-has-signatures-v2021 .report-signature-grid-v9{
+  margin:3px 0 5px!important;
+  gap:10px!important;
+}
+.report-has-signatures-v2021 .report-signature-card-v9{
+  min-height:78px!important;
+  padding:1px!important;
+}
+.report-has-signatures-v2021 .report-signature-image-v9{
+  height:42px!important;
+  margin-bottom:3px!important;
+}
+.report-has-signatures-v2021 .report-signature-note-v9{
+  margin-top:2px!important;
+  padding:4px 6px!important;
+  font-size:7.3px!important;
+}
+
+/* Cada conjunto de fotos ocupa sua própria página. Dentro da etapa, o espaço
+   útil é preenchido com imagens maiores: 1 grande; 2 empilhadas; 3/4 em 2x2. */
+.report-photo-page-v2021 .report-page-header{
+  margin-bottom:11px!important;
+}
+.report-photo-group-summary-v2021{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  column-gap:9px;
+  row-gap:1px;
+  align-items:center;
+  margin:0 0 10px;
+  padding:7px 9px;
+  border:1px solid #e3dfe1;
+  border-radius:8px;
+  background:#fbfafb;
+}
+.report-photo-group-summary-v2021>span{
+  grid-row:1/3;
+  font-size:7px;
+  font-weight:850;
+  letter-spacing:.06em;
+  color:var(--muted);
+}
+.report-photo-group-summary-v2021>strong{
+  font-size:11px;
+}
+.report-photo-group-summary-v2021>small{
+  font-size:7.5px;
+  color:var(--muted);
+}
+.report-photo-grid-v2021{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+}
+.report-photo-grid-v2021.count-1{
+  grid-template-columns:minmax(0,1fr)!important;
+  width:76%!important;
+  max-width:76%!important;
+  margin:0 auto!important;
+}
+.report-photo-grid-v2021.count-2{
+  grid-template-columns:minmax(0,1fr)!important;
+  width:66%!important;
+  max-width:66%!important;
+  margin:0 auto!important;
+}
+.report-photo-grid-v2021.count-3,
+.report-photo-grid-v2021.count-4{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+.report-photo-grid-v2021 figure{
+  padding:6px!important;
+  border-radius:8px!important;
+}
+.report-photo-grid-v2021 .report-photo-media{
+  width:100%!important;
+  aspect-ratio:4/3!important;
+  min-height:0!important;
+}
+.report-photo-grid-v2021 .report-photo-media svg{
+  width:100%!important;
+  height:100%!important;
+  max-height:none!important;
+}
+.report-photo-grid-v2021 figcaption{
+  min-height:0!important;
+  margin:4px 2px 0!important;
+}
+.report-photo-grid-v2021 figcaption strong{
+  font-size:8.7px!important;
+}
+.report-photo-grid-v2021 figcaption span{
+  font-size:7.8px!important;
+  line-height:1.3!important;
+}
+.report-photo-page-v2021 .report-standard-note{
+  margin-top:9px!important;
+  padding:6px 8px!important;
+}
+
+@media(max-width:760px){
+  .report-photo-grid-v2021.count-1,
+  .report-photo-grid-v2021.count-2{
+    width:100%!important;
+    max-width:none!important;
+  }
+  .report-photo-grid-v2021,
+  .report-photo-grid-v2021.count-3,
+  .report-photo-grid-v2021.count-4{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media print{
+  /* O indicador do banco não pode aparecer dentro do PDF. */
+  .sync-badge-v20,#ar7-sync-badge-v20{display:none!important}
+
+  .report-document-v2021 .report-compact-page-v2021{
+    padding:9mm 13mm 16mm!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-page-header{
+    margin-bottom:2.8mm!important;
+    padding-bottom:2mm!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-info-grid{
+    gap:1.8mm!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-info-grid article{
+    padding:1.8mm 2.2mm!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-text-section{
+    margin-top:2.3mm!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-text-section h2,
+  .report-document-v2021 .report-compact-page-v2021 .report-section-title{
+    margin-bottom:1.2mm!important;
+    padding-bottom:1.2mm!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-text-section p{
+    font-size:7.7pt!important;
+    line-height:1.4!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-standard-note{
+    margin-top:2.2mm!important;
+    padding:1.6mm 2mm!important;
+    font-size:6.7pt!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-table{
+    margin:1.2mm 0 2.2mm!important;
+    font-size:6.7pt!important;
+  }
+  .report-document-v2021 .report-compact-page-v2021 .report-table th,
+  .report-document-v2021 .report-compact-page-v2021 .report-table td{
+    padding:1.15mm 1.35mm!important;
+  }
+  .report-compact-divider-v2021{
+    margin:2mm 0 1.5mm!important;
+  }
+  .report-has-signatures-v2021 .report-signature-grid-v9{
+    gap:3mm!important;
+    margin:.8mm 0 1.2mm!important;
+  }
+  .report-has-signatures-v2021 .report-signature-card-v9{
+    min-height:18mm!important;
+    padding:.3mm!important;
+  }
+  .report-has-signatures-v2021 .report-signature-image-v9{
+    height:10mm!important;
+    margin-bottom:.7mm!important;
+  }
+  .report-has-signatures-v2021 .report-signature-note-v9{
+    margin-top:.5mm!important;
+    padding:1mm 1.4mm!important;
+    font-size:5.8pt!important;
+  }
+
+  .report-photo-page-v2021{
+    padding:10mm 13mm 16mm!important;
+    page-break-before:always!important;
+    break-before:page!important;
+    page-break-after:always!important;
+    break-after:page!important;
+  }
+  .report-photo-page-v2021 .report-page-header{
+    margin-bottom:2.6mm!important;
+    padding-bottom:2mm!important;
+  }
+  .report-photo-group-summary-v2021{
+    margin-bottom:2.4mm!important;
+    padding:1.7mm 2mm!important;
+    column-gap:2mm!important;
+  }
+  .report-photo-group-summary-v2021>span{font-size:5.4pt!important}
+  .report-photo-group-summary-v2021>strong{font-size:8pt!important}
+  .report-photo-group-summary-v2021>small{font-size:5.8pt!important}
+  .report-photo-grid-v2021{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:2.8mm!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+  .report-photo-grid-v2021.count-1{
+    grid-template-columns:1fr!important;
+    width:76%!important;
+    max-width:76%!important;
+    margin:0 auto!important;
+  }
+  .report-photo-grid-v2021.count-2{
+    grid-template-columns:1fr!important;
+    width:66%!important;
+    max-width:66%!important;
+    margin:0 auto!important;
+  }
+  .report-photo-grid-v2021.count-3,
+  .report-photo-grid-v2021.count-4{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .report-photo-grid-v2021 figure{
+    padding:1.4mm!important;
+  }
+  .report-photo-grid-v2021 .report-photo-media{
+    aspect-ratio:4/3!important;
+  }
+  .report-photo-grid-v2021 figcaption{
+    margin-top:1mm!important;
+    min-height:0!important;
+  }
+  .report-photo-grid-v2021 figcaption strong{font-size:6.8pt!important}
+  .report-photo-grid-v2021 figcaption span{font-size:6.1pt!important;line-height:1.25!important}
+  .report-photo-page-v2021 .report-standard-note{
+    margin-top:2mm!important;
+    padding:1.4mm 1.8mm!important;
+    font-size:5.9pt!important;
+  }
+}

@@ -1,8 +1,8 @@
 {
   "name": "ar7-gestao-oficina",
-  "version": "20.2.0",
+  "version": "20.2.1",
   "private": true,
-  "description": "AR7 Gestão da Oficina V20.2 — banco central, UX tablet/celular, orçamento separado, fluxo de prontidão e relatório otimizado.",
+  "description": "AR7 Gestão da Oficina V20.2.1 — relatório mais compacto, fotos separadas por etapa e banco central preservado.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

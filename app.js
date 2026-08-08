@@ -3689,9 +3689,117 @@
     return 5+Math.ceil(total/4);
   };
 
+  /* =========================
+     AR7 V20.2.1 — relatório compacto + fotos separadas por etapa
+     ========================= */
+  function reportPhotoSectionV2021(title,photos,orderNumber){
+    const normalized=(photos||[]).map(photo=>{
+      const p=normalizePhotoV5(photo);
+      p.observation=photoObservationV13(photo);
+      return p;
+    });
+    if(!normalized.length)return '';
+    const pages=[];
+    for(let index=0;index<normalized.length;index+=4)pages.push(normalized.slice(index,index+4));
+    return pages.map((page,pageIndex)=>`<section class="report-page report-photo-page report-photo-page-v13 report-photo-page-v202 report-photo-page-v2021" data-photo-group="${safe(title)}"><div class="report-page-header"><img src="./assets/ar7-logo.png" alt="AR7"><div><span>RELATÓRIO TÉCNICO · OS ${safe(orderNumber)}</span><strong>${safe(title)}${pages.length>1?` · página ${pageIndex+1}/${pages.length}`:''}</strong></div></div><div class="report-photo-group-summary-v2021"><span>ETAPA FOTOGRÁFICA</span><strong>${safe(title)}</strong><small>${normalized.length} registro(s) nesta etapa · esta página contém somente fotos deste conjunto</small></div><div class="report-photo-grid report-photo-grid-v202 report-photo-grid-v2021 count-${page.length}">${page.map((photo,index)=>`<figure>${reportPhotoSvgV7(photo)}<figcaption><strong>${safe(photo.caption||`Foto ${pageIndex*4+index+1}`)}</strong><span>${photo.observation?safe(photo.observation):'Registro fotográfico sem observação técnica complementar.'}</span></figcaption></figure>`).join('')}</div><div class="report-standard-note">Evidências da etapa <strong>${safe(title)}</strong>. Fotos de outras etapas são apresentadas em páginas próprias para preservar a sequência e a rastreabilidade do serviço.</div><div class="report-footer"><span>AR7 Elétrica</span><span>Evidências fotográficas · ${safe(title)}</span></div></section>`).join('');
+  }
+
+  reportPhotoSection=reportPhotoSectionV2021;
+
+  function compactTechnicalReportV2021(order){
+    const template=document.createElement('template');
+    template.innerHTML=reportDocumentBeforeV202(order).trim();
+    const root=template.content.querySelector('.report-document');
+    if(!root)return template.innerHTML;
+    root.classList.add('report-document-v2021');
+
+    let pages=[...root.querySelectorAll(':scope > .report-page')];
+    const cover=pages[0]||null;
+    const identification=pages[1]||null;
+    const intervention=pages[2]||null;
+    const components=pages[3]||null;
+    const signatures=pages[4]||null;
+
+    // A página de identificação recebia pouco conteúdo. O diagnóstico passa a ocupar
+    // o espaço útil da mesma página, sem alterar a ordem ou o conteúdo técnico.
+    if(identification&&intervention){
+      const diagnosisSection=intervention.querySelector('.report-text-section');
+      const identificationNote=identification.querySelector('.report-standard-note');
+      if(diagnosisSection){
+        if(identificationNote)identificationNote.before(diagnosisSection);
+        else identification.querySelector('.report-footer')?.before(diagnosisSection);
+      }
+      const idTitle=identification.querySelector('.report-page-header strong');
+      if(idTitle)idTitle.textContent='Identificação, critérios e diagnóstico';
+      const interventionTitle=intervention.querySelector('.report-page-header strong');
+      if(interventionTitle)interventionTitle.textContent='Intervenção, testes e conclusão';
+      identification.classList.add('report-compact-page-v2021');
+      intervention.classList.add('report-compact-page-v2021');
+    }
+
+    // Ocupação adaptativa: em relatórios curtos, componentes, medições e assinaturas
+    // completam a página de intervenção. Se houver mais dados, componentes +
+    // assinaturas compartilham a página seguinte. Só relatórios realmente extensos
+    // mantêm uma página exclusiva de assinaturas.
+    const partRows=(order.parts||[]).length;
+    const measurementRows=(order.measurements||[]).length;
+    const technicianSignatures=ensureSignaturesV9(order).technicians.length||1;
+    const reportTexts=professionalReportTextV7(order);
+    const interventionChars=['assembly','tests','conclusion','recommendations'].reduce((sum,key)=>sum+String(reportTexts[key]||'').length,0);
+    const canMergeEverything=(partRows+measurementRows)<=4&&technicianSignatures<=2&&interventionChars<=1000;
+    const canMergeSignatures=(partRows+measurementRows)<=8&&technicianSignatures<=3;
+
+    function movePageBodyBeforeFooterV2021(source,target,dividerClass='report-compact-divider-v2021'){
+      if(!source||!target)return;
+      const targetFooter=target.querySelector('.report-footer');
+      const sourceHeader=source.querySelector('.report-page-header');
+      const sourceFooter=source.querySelector('.report-footer');
+      const moving=[...source.children].filter(node=>node!==sourceHeader&&node!==sourceFooter);
+      const divider=document.createElement('div');divider.className=dividerClass;
+      if(targetFooter)targetFooter.before(divider);else target.appendChild(divider);
+      moving.forEach(node=>targetFooter?targetFooter.before(node):target.appendChild(node));
+      source.remove();
+    }
+
+    if(intervention&&components&&signatures&&canMergeEverything){
+      movePageBodyBeforeFooterV2021(components,intervention,'report-compact-divider-v2021 tables-divider-v2021');
+      movePageBodyBeforeFooterV2021(signatures,intervention,'report-compact-divider-v2021 signatures-divider-v2021');
+      intervention.classList.add('report-has-signatures-v2021','report-has-tables-v2021','report-compact-page-v2021');
+      const interventionTitle=intervention.querySelector('.report-page-header strong');
+      if(interventionTitle)interventionTitle.textContent='Intervenção, resultados e responsáveis';
+    }else if(components&&signatures&&canMergeSignatures){
+      movePageBodyBeforeFooterV2021(signatures,components,'report-compact-divider-v2021 signatures-divider-v2021');
+      components.classList.add('report-has-signatures-v2021','report-compact-page-v2021');
+      const componentTitle=components.querySelector('.report-page-header strong');
+      if(componentTitle)componentTitle.textContent='Componentes, medições e responsáveis';
+    }else{
+      components?.classList.add('report-compact-page-v2021');
+      signatures?.classList.add('report-compact-page-v2021');
+    }
+
+    pages=[...root.querySelectorAll(':scope > .report-page')];
+    pages.forEach((page,index)=>page.dataset.pageNumber=String(index+1));
+    return template.innerHTML;
+  }
+
+  reportDocumentV5=compactTechnicalReportV2021;
+
+  reportPageCount=function(order){
+    const photoPages=['before','during','assembly','after'].reduce((sum,key)=>sum+Math.ceil((order.photos?.[key]?.length||0)/4),0);
+    const partRows=(order.parts||[]).length;
+    const measurementRows=(order.measurements||[]).length;
+    const technicianSignatures=ensureSignaturesV9(order).technicians.length||1;
+    const texts=professionalReportTextV7(order);
+    const interventionChars=['assembly','tests','conclusion','recommendations'].reduce((sum,key)=>sum+String(texts[key]||'').length,0);
+    const compactAll=(partRows+measurementRows)<=4&&technicianSignatures<=2&&interventionChars<=1000;
+    const compactSignatures=(partRows+measurementRows)<=8&&technicianSignatures<=3;
+    const textPages=compactAll?3:(compactSignatures?4:5);
+    return textPages+photoPages;
+  };
+
   const shellBeforeV202=shell;
   shell=function(content,route,portal=false,portalClientId=''){
-    return shellBeforeV202(content,route,portal,portalClientId).replace(/<small>v20\.1<\/small>/g,'<small>v20.2</small>');
+    return shellBeforeV202(content,route,portal,portalClientId).replace(/<small>v20\.1<\/small>/g,'<small>v20.2.1</small>');
   };
 
   const renderBeforeV202=render;
