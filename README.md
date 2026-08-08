@@ -1,4 +1,4 @@
-# AR7 Gestão da Oficina V20.2.3
+# AR7 Gestão da Oficina V20.2.4
 
 Versão multi-dispositivo com banco central PostgreSQL.
 
@@ -188,3 +188,12 @@ Além da auditoria geral, a versão inclui:
 - renderização real em A4 usada durante a revisão para conferir cortes, página em branco e sobreposição;
 - proposta validada em **3 páginas A4**;
 - relatório de amostra validado em **7 páginas A4**, incluindo três páginas fotográficas, sem página branca final.
+
+
+## V20.2.4 — alerta comercial e proposta executiva
+
+- Dashboard destaca propostas negadas ainda sem reenvio e leva diretamente para a OS/orçamento correspondente.
+- A proposta técnico-comercial foi redesenhada em duas páginas, com linguagem mais natural e menos promocional.
+- A primeira página concentra contexto, diagnóstico, escopo, plano de execução e síntese comercial.
+- A segunda concentra materiais, composição do investimento, condições, premissas e aceite.
+- Crédito da Nexora Sistemas permanece discreto, sem competir com a marca AR7 Elétrica.

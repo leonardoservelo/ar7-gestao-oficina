@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
-Write-Host 'AR7 Gestao da Oficina V20.2.3'
+Write-Host 'AR7 Gestao da Oficina V20.2.4'
 Write-Host 'Procurando uma porta livre a partir de 8108...'
 if (Get-Command node -ErrorAction SilentlyContinue) {
   & node "$PSScriptRoot\server.js" 8108 --open --auto-port

@@ -3,7 +3,7 @@
 
   const DB_KEY = 'ar7-oficina-db-v2';
   const APP_VERSION = 20.2;
-  const APP_RELEASE = '20.2.3';
+  const APP_RELEASE = '20.2.4';
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -3311,7 +3311,7 @@
     const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local',conflict:'Conflito de edição — toque para recarregar'};
     badge.className=`sync-badge-v20 ${state}`;
     badge.textContent=message||labels[state]||state;
-    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.3 — sincronização entre dispositivos';
+    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.4 — sincronização entre dispositivos';
     badge.dataset.conflict=state==='conflict'?'1':'0';
   }
 
@@ -3928,6 +3928,96 @@
     html=html.replace(/<button(?![^>]*\btype=)/g,'<button type="button"');
     return html;
   };
+
+
+  /* ==============================================================
+     AR7 V20.2.4 — alerta comercial + proposta executiva
+     ============================================================== */
+  function rejectedProposalQueueV204(){
+    return (db.orders||[]).map(order=>{
+      const feedback=latestBudgetFeedbackV17(order);
+      const budget=ensureBudgetV11(order);
+      return {order,feedback,budget};
+    }).filter(item=>{
+      if(item.feedback?.type!=='rejected'||item.order.stage==='concluida')return false;
+      const sentAt=item.budget?.sentAt?new Date(item.budget.sentAt).getTime():0;
+      const rejectedAt=item.feedback?.at?new Date(item.feedback.at).getTime():0;
+      return !sentAt||!Number.isFinite(sentAt)||sentAt<=rejectedAt;
+    }).sort((a,b)=>String(b.feedback?.at||'').localeCompare(String(a.feedback?.at||'')));
+  }
+
+  function rejectedProposalAlertV204(items){
+    if(!items.length)return '';
+    const cards=items.slice(0,4).map(item=>{
+      const client=getClient(item.order.clientId),eq=getEquipment(item.order.equipmentId);
+      return `<a class="rejected-proposal-card-v204" href="#order/${item.order.id}">
+        <div class="rejected-proposal-card-head-v204"><span>${icon('alert',16)} Proposta negada</span><strong>OS #${safe(item.order.number)}</strong></div>
+        <h3>${safe(client?.name||'Cliente')} · ${safe(eq?.tag||equipmentDescription(eq))}</h3>
+        <p>${safe(item.feedback?.reason||'Motivo não informado pelo cliente.')}</p>
+        <div><small>${safe(item.feedback?.proposalCode||'Proposta anterior')} · ${formatDateTime(item.feedback?.at)}</small><b>Abrir orçamento ${icon('arrow',13)}</b></div>
+      </a>`;
+    }).join('');
+    return `<section class="rejected-proposal-alert-v204" aria-label="Propostas negadas que exigem ação">
+      <div class="rejected-proposal-alert-summary-v204"><span class="rejected-proposal-eyebrow-v204">ATENÇÃO COMERCIAL</span><div><strong>${items.length}</strong><h2>${items.length===1?'proposta negada':'propostas negadas'}</h2></div><p>O cliente recusou uma proposta e a OS voltou para Orçamento. Abra diretamente o item abaixo para revisar o motivo, corrigir a nova revisão e reenviar.</p></div>
+      <div class="rejected-proposal-list-v204">${cards}${items.length>4?`<a class="rejected-proposal-more-v204" href="#budgets">Ver mais ${items.length-4} no Comercial ${icon('arrow',14)}</a>`:''}</div>
+    </section>`;
+  }
+
+  const dashboardViewBeforeV204=dashboardView;
+  dashboardView=function(){
+    let html=dashboardViewBeforeV204();
+    const rejected=rejectedProposalQueueV204();
+    if(!rejected.length)return html;
+    const alert=rejectedProposalAlertV204(rejected);
+    return html.replace('<section class="executive-kpis-v19">',`${alert}<section class="executive-kpis-v19">`);
+  };
+
+  const proposalDocumentBeforeV204=proposalDocumentV11;
+  proposalDocumentV11=function(order){
+    const budget=ensureBudgetV11(order),totals=budgetTotalsV11(order),client=getClient(order.clientId),eq=getEquipment(order.equipmentId);
+    const today=new Intl.DateTimeFormat('pt-BR').format(new Date());
+    const revision=`R${String(budget.revision||1).padStart(2,'0')}`;
+    const contact=[client?.contact,client?.email].filter(Boolean).map(safe).join(' · ')||'Contato não informado';
+    const diagnosis=safe(order.records?.diagnosis||order.notes||'A condição técnica será tratada conforme a avaliação registrada na Ordem de Serviço.');
+    const scope=safe(budget.technicalScope||'Execução dos serviços necessários para correção da condição identificada, seguida das verificações finais aplicáveis ao equipamento.');
+    const request=safe(order.defect||'Solicitação conforme Ordem de Serviço.');
+    const partRows=(order.parts||[]).map((part,index)=>{const quote=selectedQuoteV11(part);return `<tr><td>${index+1}</td><td><strong>${safe(part.name)}</strong><small>${safe(part.position||'Aplicação conforme desmontagem')}</small></td><td>${safe(part.code||'—')}</td><td>${safe(part.dimensions||'—')}</td><td>${safe(partQuantity(part))}</td><td>${safe(quote?.brand||quote?.supplier||'Conforme especificação')}</td></tr>`;}).join('');
+    const commercialNotes=budget.commercialNotes?`<div class="proposal-note-v204"><strong>Observações comerciais</strong><p>${safe(budget.commercialNotes)}</p></div>`:'';
+    return `<div class="report-document proposal-document-v11 proposal-document-v204" id="printable-report">
+      <section class="report-page proposal-page-v204 proposal-opening-v204">
+        <header class="proposal-header-v204"><img src="./assets/ar7-logo.png" alt="AR7 Elétrica"><div><span>PROPOSTA TÉCNICO-COMERCIAL</span><strong>${safe(budget.proposalCode)}</strong><small>Emissão ${today} · ${revision}</small></div></header>
+        <div class="proposal-hero-v204"><span>MANUTENÇÃO ELETROMECÂNICA</span><h1>${safe(equipmentDescription(eq))}</h1><p>Proposta para execução do serviço registrado na OS ${safe(order.number)}.</p></div>
+        <div class="proposal-recipient-v204"><div><small>PREPARADA PARA</small><strong>${safe(client?.name||'Empresa contratante')}</strong><p>${contact}</p></div><div><small>EQUIPAMENTO</small><strong>${safe(eq?.tag||'Sem TAG')}</strong><p>${safe(eq?.manufacturer||'Fabricante não informado')} · ${safe(eq?.serial||'Série não informada')}</p></div></div>
+        <div class="proposal-letter-v204"><strong>Prezados,</strong><p>Em atenção à OS ${safe(order.number)}, apresentamos nossa proposta para execução dos serviços no equipamento <b>${safe(equipmentDescription(eq))}</b>. O escopo foi estruturado a partir do diagnóstico registrado e reúne a intervenção prevista, os materiais necessários e as condições comerciais para aprovação.</p></div>
+        <section class="proposal-case-v204"><div class="proposal-case-title-v204"><span>01</span><div><small>SOLICITAÇÃO / CONDIÇÃO REGISTRADA</small><h2>O que encontramos</h2></div></div><p class="proposal-request-v204"><b>Solicitação:</b> ${request}</p><p>${diagnosis}</p></section>
+        <section class="proposal-case-v204"><div class="proposal-case-title-v204"><span>02</span><div><small>ESCOPO RECOMENDADO</small><h2>O que será executado</h2></div></div><p>${scope}</p></section>
+        <div class="proposal-plan-v204"><article><span>01</span><strong>Preparar</strong><p>Conferência do equipamento e organização da intervenção conforme a OS.</p></article><article><span>02</span><strong>Executar</strong><p>Serviços e substituições previstos no escopo aprovado, com registro das etapas.</p></article><article><span>03</span><strong>Validar e entregar</strong><p>Verificações finais aplicáveis e emissão do relatório técnico de conclusão.</p></article></div>
+        <div class="proposal-summary-v204"><div class="primary"><small>INVESTIMENTO</small><strong>${moneyV11(totals.total)}</strong></div><div><small>PRAZO ESTIMADO</small><strong>${safe(budget.executionDays)} dias úteis</strong></div><div><small>PAGAMENTO</small><strong>${safe(budget.paymentTerms||'A definir')}</strong></div><div><small>VALIDADE</small><strong>${formatDate(budget.validUntil)}</strong></div></div>
+        <div class="proposal-assurance-v204">A execução será registrada na Ordem de Serviço e o relatório técnico final integrará o histórico do equipamento.</div>
+        <div class="report-footer"><span>AR7 Elétrica · Proposta técnico-comercial</span><span>${safe(budget.proposalCode)} · 1/2</span></div>
+      </section>
+      <section class="report-page proposal-page-v204 proposal-commercial-v204">
+        <header class="proposal-header-v204 compact"><img src="./assets/ar7-logo.png" alt="AR7 Elétrica"><div><span>${safe(budget.proposalCode)}</span><strong>Composição e condições comerciais</strong><small>${safe(client?.name||'Empresa contratante')} · OS ${safe(order.number)}</small></div></header>
+        <div class="proposal-commercial-intro-v204"><span>ESCOPO COMERCIAL DESTA REVISÃO</span><h2>Materiais, investimento e condições para autorização.</h2><p>Os valores abaixo correspondem exclusivamente ao escopo desta revisão. Qualquer necessidade adicional identificada durante a execução será comunicada antes de gerar alteração de valor ou prazo.</p></div>
+        <h2 class="proposal-section-title-v204">Materiais e componentes previstos</h2>
+        <table class="report-table proposal-parts-v204"><thead><tr><th>#</th><th>Item / aplicação</th><th>Código</th><th>Medidas</th><th>Qtd.</th><th>Referência</th></tr></thead><tbody>${partRows||'<tr><td colspan="6">Esta revisão não prevê fornecimento de peças ou componentes.</td></tr>'}</tbody></table>
+        <div class="proposal-investment-v204"><div class="proposal-total-v204"><small>INVESTIMENTO TOTAL</small><strong>${moneyV11(totals.total)}</strong><p>Valor total desta revisão, conforme composição ao lado.</p></div><div class="proposal-breakdown-v204">${budgetSummaryTableV11(order,true)}</div></div>
+        <div class="proposal-conditions-v204"><article><small>CONDIÇÃO DE PAGAMENTO</small><strong>${safe(budget.paymentTerms||'A definir')}</strong></article><article><small>PRAZO DE EXECUÇÃO</small><strong>${safe(budget.executionDays)} dias úteis</strong><p>Após aprovação e disponibilidade dos materiais.</p></article><article><small>VALIDADE</small><strong>${formatDate(budget.validUntil)}</strong></article><article><small>GARANTIA</small><strong>${safe(budget.warranty||'Conforme condições do serviço')}</strong></article></div>
+        ${commercialNotes}
+        <section class="proposal-premises-v204"><h3>Premissas desta proposta</h3><ul><li>O início do serviço está condicionado à aprovação formal desta revisão e à disponibilidade dos materiais previstos.</li><li>Itens ou serviços adicionais não contemplados neste documento somente serão executados após nova autorização.</li><li>A garantia se aplica aos serviços executados pela AR7 Elétrica, observadas as condições de operação e aplicação do equipamento.</li></ul></section>
+        <section class="proposal-accept-v204"><div class="proposal-accept-copy-v204"><span>ACEITE E AUTORIZAÇÃO</span><h3>Autorização referente à ${safe(budget.proposalCode)}</h3><p>Ao aprovar esta proposta, a empresa contratante autoriza a AR7 Elétrica a executar o escopo e providenciar os materiais aqui descritos, respeitando as condições comerciais desta revisão.</p></div><div class="proposal-signatures-v204"><div><span>Nome e função</span></div><div><span>Data</span></div><div><span>Assinatura / autorização</span></div></div></section>
+        <div class="proposal-closing-v204"><p>Agradecemos a oportunidade de atender <strong>${safe(client?.name||'sua empresa')}</strong>. Permanecemos à disposição para esclarecimentos técnicos ou comerciais sobre esta proposta.</p><strong>AR7 Elétrica</strong></div>
+        ${developerCreditV203('Sistema de gestão e documentos')}
+        <div class="report-footer"><span>AR7 Elétrica · Documento comercial controlado</span><span>${safe(budget.proposalCode)} · 2/2</span></div>
+      </section>
+    </div>`;
+  };
+
+  const proposalViewBeforeV204=proposalViewV11;
+  proposalViewV11=function(orderId){return proposalViewBeforeV204(orderId).replace(/>3 páginas</g,'>2 páginas<');};
+
+  const portalProposalViewBeforeV204=portalProposalViewV18;
+  portalProposalViewV18=function(deliveryId){return portalProposalViewBeforeV204(deliveryId).replace(/>3 páginas</g,'>2 páginas<');};
 
   const renderBeforeV202=render;
   render=function(options={}){renderBeforeV202(options);requestAnimationFrame(enhanceMobileUXV202);};
