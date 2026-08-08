@@ -8,13 +8,40 @@ os.chdir(ROOT)
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('X-Content-Type-Options','nosniff')
+        self.send_header('X-Frame-Options','DENY')
         self.send_header('Referrer-Policy','same-origin')
+        self.send_header('Permissions-Policy','camera=(self), microphone=(), geolocation=()')
         super().end_headers()
+    def _json(self, status, payload):
+        body=json.dumps(payload, ensure_ascii=False).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type','application/json; charset=utf-8')
+        self.send_header('Cache-Control','no-store')
+        self.send_header('Content-Length',str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
     def do_GET(self):
-        if self.path.split('?',1)[0] == '/health':
-            body=json.dumps({'ok':True,'app':'AR7 Gestão da Oficina','version':'19.0.0'}).encode('utf-8')
-            self.send_response(200); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Content-Length',str(len(body))); self.end_headers(); self.wfile.write(body); return
+        route=self.path.split('?',1)[0]
+        if route == '/health':
+            self._json(200,{'ok':True,'app':'AR7 Gestão da Oficina','version':'20.2.2','databaseConfigured':False,'databaseConnected':False})
+            return
+        if route == '/api/auth/status':
+            self._json(503,{'ok':False,'authenticated':False,'configured':False,'error':'Banco central não configurado neste servidor local de contingência.'})
+            return
+        if route.startswith('/api/'):
+            self._json(503,{'ok':False,'error':'API central indisponível no servidor Python local. Use Node.js para banco compartilhado.'})
+            return
         return super().do_GET()
+    def do_POST(self):
+        if self.path.split('?',1)[0].startswith('/api/'):
+            self._json(503,{'ok':False,'error':'API central indisponível no servidor Python local. Use Node.js para banco compartilhado.'})
+            return
+        self.send_error(405,'Método não permitido')
+    def do_PUT(self):
+        if self.path.split('?',1)[0].startswith('/api/'):
+            self._json(503,{'ok':False,'error':'API central indisponível no servidor Python local. Use Node.js para banco compartilhado.'})
+            return
+        self.send_error(405,'Método não permitido')
     def log_message(self, fmt, *args):
         print('[AR7]', fmt % args)
 
@@ -42,7 +69,7 @@ def main():
     server=ThreadingHTTPServer((host,port),Handler)
     url=f'http://localhost:{port}/#dashboard'
     print('==============================================================')
-    print(' AR7 Gestao da Oficina V19')
+    print(' AR7 Gestao da Oficina V20.2.2')
     print(f' Servidor: {host}:{port}')
     print(f' Acesso local: {url}')
     print('==============================================================')

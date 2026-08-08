@@ -1,4 +1,4 @@
-# AR7 Gestão da Oficina V20.2
+# AR7 Gestão da Oficina V20.2.2
 
 Versão multi-dispositivo com banco central PostgreSQL.
 
@@ -77,8 +77,74 @@ O fluxo foi transformado em stepper compacto:
 - espaços internos reduzidos sem alterar a identidade visual;
 - fotos de serviço consolidadas, até quatro lado a lado por página;
 - todas as miniaturas usam a mesma área visual;
-- fotos de diferentes etapas são reunidas em páginas de **Fotos do serviço**, reduzindo páginas desperdiçadas;
+- fotos permanecem separadas por etapa e são paginadas em grupos de até quatro, preservando a rastreabilidade sem desperdiçar espaço;
 - assinatura de técnico e supervisor sem caixa/contorno no PDF.
 
 ### Identidade visual
 A paleta e as cores existentes do projeto foram mantidas. O verde é usado somente como indicador de condição atendida/pronto para avançar, seguindo o padrão já existente no sistema.
+
+## V20.2.2 — revisão geral antes do piloto
+
+Esta versão recebeu uma revisão transversal do fluxo operacional e da interface, sem alterar a identidade visual da AR7.
+
+### Fluxo operacional revisado
+A sequência principal ficou consolidada em dez etapas, com nomenclatura única em todas as telas:
+1. Recebimento;
+2. Diagnóstico;
+3. Peças do orçamento;
+4. Revisão da proposta;
+5. Aguardando cliente;
+6. Compra e materiais;
+7. Montagem;
+8. Testes finais;
+9. Relatório e envio;
+10. Concluída.
+
+A passagem entre etapas respeita os requisitos de prontidão. Ações pendentes permanecem desabilitadas; ações realmente prontas usam o verde como confirmação. Uma OS concluída não volta a oferecer o comando de salvar/avançar etapa.
+
+### Interface, textos e responsividade
+- alinhamentos, quebras de texto, larguras mínimas e espaçamentos foram revisados em desktop, tablet e celular;
+- cabeçalhos, filtros, tabelas, cartões, botões e formulários receberam proteções contra estouro horizontal;
+- Configurações passou a se adaptar também a telas muito estreitas;
+- campos críticos das etapas comerciais e operacionais receberam rótulos associados;
+- botões gerados em telas e modais recebem tipo explícito, evitando envios acidentais de formulários;
+- foco por teclado, `focus-visible` e preferência por movimento reduzido foram contemplados;
+- nomenclaturas comerciais foram uniformizadas para **Peças do orçamento**, **Revisão da proposta** e **Aguardando cliente**.
+
+### Sincronização e proteção de dados
+- a sincronização usa revisão esperada para impedir sobrescrita silenciosa entre dois dispositivos;
+- conflito de edição retorna HTTP 409 e preserva uma cópia local antes de recarregar o banco;
+- alterações feitas offline permanecem marcadas como pendentes mesmo após recarregar a página;
+- ao voltar a ficar online, o sistema tenta enviar a alteração pendente antes de puxar um estado remoto mais novo;
+- importação de backup valida tamanho e estrutura mínima antes de substituir os dados locais;
+- reset de demonstração exige confirmação explícita e não é executado automaticamente;
+- datas de calendário usam o fuso local, evitando mudança de dia provocada por conversão UTC.
+
+### Autenticação e servidor
+- o servidor Node mantém login por cookie HttpOnly e PostgreSQL por `DATABASE_URL`;
+- tentativas de login inválidas são limitadas por janela de tempo/IP;
+- headers básicos de segurança foram adicionados às respostas;
+- quando autenticação/banco não estão configurados em ambiente local, a interface entra corretamente em modo local em vez de bloquear o usuário em uma tela de login impossível;
+- o servidor Python continua sendo apenas uma contingência para servir os arquivos localmente. Ele sinaliza explicitamente que a API central não está disponível. Para produção multi-dispositivo, use o servidor Node.js.
+
+### Relatório técnico
+- relatório compacto preservado;
+- diagnóstico aproveita melhor a página de identificação;
+- componentes, medições e assinaturas são agrupados quando houver espaço seguro;
+- fotos são separadas por etapa e paginadas em grupos de até quatro;
+- o indicador de sincronização não aparece no PDF;
+- assinaturas permanecem sem contorno externo.
+
+### Verificações incluídas no pacote
+- `npm test`: smoke/integridade de código e servidor;
+- `npm run test:ui`: auditoria estrutural de 52 telas/estados, incluindo as dez etapas do fluxo;
+- `npm run test:all`: executa as duas suítes.
+
+## Notas para produção
+
+A V20.2.2 mantém propositalmente a arquitetura de estado central em JSONB para reduzir o risco desta etapa de implantação. Ela é adequada para o piloto e para evolução controlada, mas há dois pontos que devem entrar no planejamento de produção em escala:
+
+1. **Fotos:** hoje as imagens compactadas fazem parte do estado da aplicação. Com alto volume histórico, o ideal é migrar as imagens para object storage e manter no banco apenas metadados/URLs.
+2. **Usuários e permissões:** o servidor possui autenticação administrativa central. Para rastreabilidade individual de técnico, compras, supervisor e administrador, a próxima camada de produção deve adotar contas e permissões por usuário no servidor.
+
+Esses pontos não impedem a demonstração nem o piloto controlado, mas devem ser tratados antes de ampliar a solução para múltiplas oficinas ou grande volume de fotos simultâneas.

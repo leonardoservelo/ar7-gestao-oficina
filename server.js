@@ -25,6 +25,9 @@ const ADMIN_USER = process.env.AR7_ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.AR7_ADMIN_PASSWORD || '';
 const APP_SECRET = process.env.APP_SECRET || '';
 const SESSION_HOURS = Number.parseInt(process.env.AR7_SESSION_HOURS || '12', 10) || 12;
+const LOGIN_WINDOW_MS = 15*60*1000;
+const LOGIN_MAX_ATTEMPTS = 8;
+const loginFailures = new Map();
 
 const pool = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
@@ -62,7 +65,7 @@ function openBrowser(url){
 
 function json(res,status,payload,headers={}){
   const body=JSON.stringify(payload);
-  res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers});
+  res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'same-origin','Permissions-Policy':'camera=(self), microphone=(), geolocation=()',...headers});
   res.end(body);
 }
 
@@ -97,6 +100,21 @@ function verifySession(token){
   }catch{return null;}
 }
 function safeEquals(a,b){const aa=Buffer.from(String(a)),bb=Buffer.from(String(b));return aa.length===bb.length&&crypto.timingSafeEqual(aa,bb);}
+function loginAttemptKey(req){return String(req.socket?.remoteAddress||'unknown');}
+function pruneLoginFailures(now=Date.now()){
+  for(const [key,state] of loginFailures){if(now-state.startedAt>LOGIN_WINDOW_MS)loginFailures.delete(key);}
+  if(loginFailures.size>1024){for(const key of loginFailures.keys()){loginFailures.delete(key);if(loginFailures.size<=768)break;}}
+}
+function loginAttemptState(req){
+  const key=loginAttemptKey(req),now=Date.now();
+  if(loginFailures.size>1024)pruneLoginFailures(now);
+  let state=loginFailures.get(key);
+  if(!state||now-state.startedAt>LOGIN_WINDOW_MS){state={count:0,startedAt:now};loginFailures.set(key,state);}
+  return {key,state,now};
+}
+function loginBlocked(req){const {state,now}=loginAttemptState(req);return state.count>=LOGIN_MAX_ATTEMPTS&&now-state.startedAt<=LOGIN_WINDOW_MS;}
+function recordLoginFailure(req){const {key,state}=loginAttemptState(req);state.count+=1;loginFailures.set(key,state);}
+function clearLoginFailures(req){loginFailures.delete(loginAttemptKey(req));}
 function requireAuth(req,res){
   if(!APP_SECRET||!ADMIN_PASSWORD){json(res,503,{ok:false,error:'Autenticação do servidor ainda não configurada.'});return null;}
   const session=verifySession(parseCookies(req).ar7_session);
@@ -129,16 +147,19 @@ async function ensureSchema(){
 
 async function handleApi(req,res,url){
   if(url.pathname==='/api/auth/status'&&req.method==='GET'){
+    if(!APP_SECRET||!ADMIN_PASSWORD){json(res,503,{ok:false,authenticated:false,configured:false,error:'Autenticação do servidor ainda não configurada.'});return true;}
     const session=verifySession(parseCookies(req).ar7_session);
-    if(!session){json(res,401,{ok:false,authenticated:false});return true;}
-    json(res,200,{ok:true,authenticated:true,user:session.u});return true;
+    if(!session){json(res,401,{ok:false,authenticated:false,configured:true});return true;}
+    json(res,200,{ok:true,authenticated:true,configured:true,user:session.u});return true;
   }
   if(url.pathname==='/api/auth/login'&&req.method==='POST'){
     if(!APP_SECRET||!ADMIN_PASSWORD){json(res,503,{ok:false,error:'Login ainda não configurado no servidor.'});return true;}
+    if(loginBlocked(req)){json(res,429,{ok:false,error:'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.'},{'Retry-After':String(Math.ceil(LOGIN_WINDOW_MS/1000))});return true;}
     const body=await readJson(req,64*1024);
     if(!safeEquals(body.username||'',ADMIN_USER)||!safeEquals(body.password||'',ADMIN_PASSWORD)){
-      json(res,401,{ok:false,error:'Usuário ou senha inválidos.'});return true;
+      recordLoginFailure(req);json(res,401,{ok:false,error:'Usuário ou senha inválidos.'});return true;
     }
+    clearLoginFailures(req);
     const token=signSession(ADMIN_USER);
     const secure=isHosted?'; Secure':'';
     json(res,200,{ok:true,user:ADMIN_USER},{'Set-Cookie':`ar7_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_HOURS*3600}${secure}`});
@@ -160,23 +181,40 @@ async function handleApi(req,res,url){
   }
   if(url.pathname==='/api/state'&&req.method==='PUT'){
     const session=requireAuth(req,res);if(!session)return true;
+    let client=null;
     try{
       const body=await readJson(req);
       if(!body||typeof body.data!=='object'||Array.isArray(body.data)){json(res,400,{ok:false,error:'Estado inválido.'});return true;}
+      const expectedRevision=Number(body.expectedRevision);
+      if(!Number.isInteger(expectedRevision)||expectedRevision<0){json(res,400,{ok:false,error:'Revisão de sincronização inválida.'});return true;}
       await ensureSchema();
-      const result=await pool.query(`
-        INSERT INTO ar7_app_state(state_key,data,revision,updated_at)
-        VALUES('main',$1::jsonb,1,now())
-        ON CONFLICT(state_key) DO UPDATE
-          SET data=EXCLUDED.data,
-              revision=ar7_app_state.revision+1,
-              updated_at=now()
-        RETURNING revision,updated_at
-      `,[JSON.stringify(body.data)]);
-      const row=result.rows[0];
-      await pool.query(`INSERT INTO ar7_audit_log(actor,action,revision) VALUES($1,$2,$3)`,[session.u,'state-save',Number(row.revision)]).catch(()=>{});
+      client=await pool.connect();
+      await client.query('BEGIN');
+      const current=await client.query(`SELECT revision FROM ar7_app_state WHERE state_key='main' FOR UPDATE`);
+      let row;
+      if(!current.rows.length){
+        if(expectedRevision!==0){
+          await client.query('ROLLBACK');
+          json(res,409,{ok:false,conflict:true,currentRevision:0,error:'O banco central foi reinicializado. Recarregue os dados antes de salvar.'});return true;
+        }
+        const inserted=await client.query(`INSERT INTO ar7_app_state(state_key,data,revision,updated_at) VALUES('main',$1::jsonb,1,now()) RETURNING revision,updated_at`,[JSON.stringify(body.data)]);
+        row=inserted.rows[0];
+      }else{
+        const currentRevision=Number(current.rows[0].revision);
+        if(currentRevision!==expectedRevision){
+          await client.query('ROLLBACK');
+          json(res,409,{ok:false,conflict:true,currentRevision,error:'Outro dispositivo salvou alterações antes deste. Recarregue o banco central antes de continuar.'});return true;
+        }
+        const updated=await client.query(`UPDATE ar7_app_state SET data=$1::jsonb, revision=revision+1, updated_at=now() WHERE state_key='main' RETURNING revision,updated_at`,[JSON.stringify(body.data)]);
+        row=updated.rows[0];
+      }
+      await client.query(`INSERT INTO ar7_audit_log(actor,action,revision) VALUES($1,$2,$3)`,[session.u,'state-save',Number(row.revision)]);
+      await client.query('COMMIT');
       json(res,200,{ok:true,revision:Number(row.revision),updatedAt:row.updated_at});
-    }catch(error){console.error('PUT /api/state',error);json(res,error.statusCode||503,{ok:false,error:error.statusCode===413?'Dados excederam o limite de sincronização.':'Não foi possível salvar no banco central.'});}
+    }catch(error){
+      if(client){try{await client.query('ROLLBACK');}catch{}}
+      console.error('PUT /api/state',error);json(res,error.statusCode||503,{ok:false,error:error.statusCode===413?'Dados excederam o limite de sincronização.':'Não foi possível salvar no banco central.'});
+    }finally{client?.release?.();}
     return true;
   }
   if(url.pathname==='/api/sync-status'&&req.method==='GET'){
@@ -193,7 +231,7 @@ async function requestHandler(req,res){
   if(url.pathname==='/health'){
     let database=false;
     if(pool){try{await ensureSchema();await pool.query('SELECT 1');database=true;}catch(error){console.error('Health database check',error.message);}}
-    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.1',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
+    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.2',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
   }
   if(url.pathname.startsWith('/api/')){
     try{if(await handleApi(req,res,url))return;}catch(error){console.error('API error',error);json(res,error.statusCode||500,{ok:false,error:'Erro interno da API.'});return;}
@@ -212,7 +250,7 @@ async function requestHandler(req,res){
         res.writeHead(error.code==='ENOENT'?404:500,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'});res.end(error.code==='ENOENT'?'Arquivo não encontrado.':'Erro interno do servidor.');return;
       }
       const extension=path.extname(target).toLowerCase(),immutable=/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(extension);
-      res.writeHead(200,{'Content-Type':mimeTypes[extension]||'application/octet-stream','Cache-Control':immutable?'public, max-age=86400':'no-store, no-cache, must-revalidate, max-age=0','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});res.end(data);
+      res.writeHead(200,{'Content-Type':mimeTypes[extension]||'application/octet-stream','Cache-Control':immutable?'public, max-age=86400':'no-store, no-cache, must-revalidate, max-age=0','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'same-origin','Permissions-Policy':'camera=(self), microphone=(), geolocation=()'});res.end(data);
     });
   });
 }
@@ -232,7 +270,7 @@ function listenOn(candidate){
     server=candidateServer;
     const url=`http://localhost:${candidate}/#dashboard`;
     console.log('==============================================================');
-    console.log(' AR7 Gestao da Oficina V20.2.1 - Banco Central + Relatorio Compacto');
+    console.log(' AR7 Gestao da Oficina V20.2.2 - Revisao Geral + Banco Central');
     console.log(` Servidor: ${host}:${candidate}`);
     console.log(` Acesso local: ${url}`);
     console.log(` Banco central: ${DATABASE_URL?'configurado':'NAO configurado'}`);

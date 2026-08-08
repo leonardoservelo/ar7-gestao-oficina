@@ -1320,7 +1320,7 @@ textarea.auto-grow-v202,
 }
 
 /* ============================================================
-   AR7 V20.2.1 - Relatório compacto e fotos separadas por etapa
+   AR7 V20.2.2 - Relatório compacto e fotos separadas por etapa
    Mantém a identidade visual atual; altera somente ocupação/espaço.
    ============================================================ */
 .report-document-v2021 .report-compact-page-v2021{
@@ -1607,3 +1607,116 @@ textarea.auto-grow-v202,
     font-size:5.9pt!important;
   }
 }
+
+/* ============================================================
+   AR7 V20.2.2 — revisão geral de interface e responsividade
+   Ajustes finais de alinhamento, legibilidade e estados interativos.
+   ============================================================ */
+.page,.page-head,.card,.card-head,.card-body,.stack,.grid,.form-grid,.form-group,
+.detail-layout,.dashboard-layout,.dashboard-secondary,.budget-editor-layout-v11,
+.current-task-v202,.current-task-v202 .task-body,.quotation-parts-toolbar-v202,
+.quote-part-card-v11,.supplier-quote-v11,.alert-item,.task-body>div{min-width:0}
+
+.page-head>div:first-child,.card-head>div:first-child,.alert-item>div,.sidebar-foot>div:last-child{min-width:0}
+.page-head h1,.card-head h2,.card-head h3,.card-head p,.alert-item strong,.alert-item p,
+.detail-field strong,.sidebar-foot strong,.sidebar-foot small,.workspace,.table td,.table th{
+  overflow-wrap:anywhere;
+}
+.page-head h1{line-height:1.18;letter-spacing:-.015em}
+.page-head p{line-height:1.5;max-width:900px}
+.card-head{min-height:58px}
+.card-head>div>p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
+.card-body{min-width:0}
+
+.workspace{
+  display:inline-flex;align-items:center;gap:6px;max-width:min(360px,38vw);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;
+}
+.workspace small{flex:0 0 auto;opacity:.72}
+.top-actions{min-width:0}
+.live-sync-indicator{white-space:nowrap}
+
+.btn{line-height:1.25;text-align:center;white-space:normal}
+.btn svg,.top-icon svg,.menu-btn svg{flex:0 0 auto}
+.row-actions,.head-actions{align-items:center}
+.filters{align-items:center;min-width:0}
+.filters .search{flex:1 1 280px;min-width:min(280px,100%)}
+.filters>.select{flex:0 1 240px;min-width:180px}
+.form-group{align-self:start}
+.form-group label{line-height:1.35}
+.input,.select,.textarea{max-width:100%}
+.textarea{line-height:1.5}
+
+.table-wrap{max-width:100%;scrollbar-gutter:stable}
+.table th{white-space:nowrap}
+.table td{line-height:1.4}
+.table tbody tr:last-child td{border-bottom:0}
+
+.settings-danger-note-v2022{
+  display:grid;gap:3px;padding:11px 12px;border:1px solid #efc9cd;border-radius:10px;
+  background:#fff7f8;color:#6c3439;font-size:11px;line-height:1.45;
+}
+.settings-danger-note-v2022 strong{font-size:12px;color:var(--red-700)}
+
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:3px solid rgba(201,32,47,.24);outline-offset:2px;
+}
+
+@media(max-width:900px){
+  .page{padding:18px}
+  .page-head{gap:14px;flex-wrap:wrap}
+  .page-head>div:first-child{flex:1 1 420px}
+  .head-actions{flex:1 1 100%;justify-content:flex-start}
+  .card-head{align-items:flex-start;flex-wrap:wrap}
+  .card-head>.filters{flex:1 1 100%}
+  .filters{width:100%}
+  .filters .search{flex:1 1 100%}
+  .filters>.select{flex:1 1 240px}
+  .workspace{max-width:42vw}
+}
+
+@media(max-width:640px){
+  .page{padding:14px}
+  .page-head{margin-bottom:14px}
+  .page-head h1{font-size:23px}
+  .page-head p{font-size:12px}
+  .head-actions{display:grid;grid-template-columns:1fr;width:100%}
+  .head-actions>.btn,.head-actions>a.btn{width:100%}
+  .card-head{padding:14px}
+  .card-body{padding:14px}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid>.span-2,.span-2{grid-column:auto}
+  .filters{display:grid;grid-template-columns:1fr}
+  .filters .search,.filters>.select{min-width:0;width:100%}
+  .row-actions{width:100%}
+  .row-actions>.btn{flex:1 1 150px}
+  .topbar{height:60px;padding:0 12px;gap:8px}
+  .live-sync-indicator{font-size:10px;overflow:hidden;text-overflow:ellipsis}
+  .top-actions{gap:6px}
+  .workspace{max-width:50vw;padding:8px 9px;font-size:11px}
+  .workspace small{font-size:9px}
+  .sync-badge-v20{font-size:10px}
+  .table th,.table td{padding:10px 9px}
+  .alert-item{padding:11px}
+}
+
+@media(max-width:440px){
+  .page{padding:11px}
+  .card{border-radius:13px}
+  .card-head,.card-body{padding:12px}
+  .btn{padding:10px 12px;min-height:40px}
+  .workspace{max-width:54vw}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+.sync-badge-v20.conflict{background:#9d6500;pointer-events:auto;cursor:pointer;max-width:min(520px,calc(100vw - 36px));white-space:normal}
+
+/* V20.2.2 — KPIs de Compras sem largura fixa inline. */
+.parts-kpis-v2022{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:900px){.parts-kpis-v2022{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:440px){.parts-kpis-v2022{grid-template-columns:1fr}}
+
+/* V20.2.2 — configurações sem largura mínima que estoure telas estreitas. */
+.settings-grid-v2022{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}
