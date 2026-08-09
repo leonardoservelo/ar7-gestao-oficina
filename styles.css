@@ -2397,3 +2397,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .empty-state-actions-v205{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:10px}
 .error-recovery-v205 .empty-state-icon-v205{background:var(--amber-100);color:var(--amber-700)}
 @media(max-width:640px){.developer-workspace-v205{font-size:12px!important;padding-inline:10px!important}.empty-state-card-v205{margin-top:16px;padding:34px 20px}.empty-state-actions-v205{width:100%;flex-direction:column}.empty-state-actions-v205 .btn{width:100%;justify-content:center}}
+
+/* ==============================================================
+   AR7 V20.2.6 — armazenamento central e limpeza definitiva
+   ============================================================== */
+.storage-policy-v206{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid #d8e7dc;border-radius:12px;background:#f5fbf7}
+.storage-policy-icon-v206{width:38px;height:38px;border-radius:10px;background:#e0f4e6;color:#167c46;display:grid;place-items:center;flex:0 0 auto}
+.storage-policy-v206 strong,.storage-rule-v206 strong{display:block;color:var(--text)}
+.storage-policy-v206 p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.55}
+.storage-rule-v206{padding:12px 0;border-top:1px solid var(--border);display:grid;gap:4px}
+.storage-rule-v206 span{font-size:12px;color:var(--muted);line-height:1.5}
+.settings-danger-card-v206{border-color:#efc8cd;background:linear-gradient(180deg,#fff,#fff8f9)}
+.settings-danger-copy-v206{margin:0;color:#6b2b33;font-size:13px;line-height:1.55}
+.purge-confirm-v206{display:grid;gap:16px}
+.purge-warning-v206{display:flex;gap:12px;padding:14px;border:1px solid #edc2c8;border-radius:12px;background:#fff4f5;color:#8f1723}
+.purge-warning-v206 p{margin:5px 0 0;font-size:12px;line-height:1.5;color:#74434a}
+.purge-check-v206{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--text)}
+.purge-check-v206 input{margin-top:3px}
+.camera-capture-v206{display:grid;gap:12px}
+.camera-capture-v206 video{display:block;width:100%;max-height:65vh;object-fit:cover;background:#111;border-radius:14px}
+.camera-capture-v206 p{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
+@media(max-width:720px){.camera-capture-v206 video{max-height:55vh}.storage-policy-v206{padding:12px}}

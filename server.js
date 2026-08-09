@@ -28,6 +28,58 @@ const SESSION_HOURS = Number.parseInt(process.env.AR7_SESSION_HOURS || '12', 10)
 const LOGIN_WINDOW_MS = 15*60*1000;
 const LOGIN_MAX_ATTEMPTS = 8;
 const loginFailures = new Map();
+const APP_RELEASE = '20.2.6';
+const MIN_WRITE_RELEASE = '20.2.6';
+const MAX_MEDIA_BYTES = 2 * 1024 * 1024;
+
+function releaseAtLeast(value, minimum){
+  const a=String(value||'0').split('.').map(n=>Number.parseInt(n,10)||0);
+  const b=String(minimum||'0').split('.').map(n=>Number.parseInt(n,10)||0);
+  const len=Math.max(a.length,b.length);
+  for(let i=0;i<len;i++){const av=a[i]||0,bv=b[i]||0;if(av>bv)return true;if(av<bv)return false;}
+  return true;
+}
+
+function emptyStateV206(base={}){
+  const defaults={name:'AR7 Elétrica',unit:'Matriz',email:'relatorios@ar7eletrica.com.br'};
+  const defaultCatalog={
+    equipmentDescriptions:[],
+    manufacturers:['WEG','SEW','Siemens','KSB','Schneider','ABB','NORD','Bonfiglioli','Voges','Marathon','OTAM'],
+    partNames:['Rolamento','Retentor','Selo mecânico','O-ring','Ventoinha','Tampa','Eixo','Bucha','Acoplamento','Junta','Bobina','Capacitor']
+  };
+  return {
+    version:20.2,
+    company:{...defaults,...(base.company||{})},
+    catalog:{...defaultCatalog,...(base.catalog||{}),equipmentDescriptions:[]},
+    clients:[],equipment:[],orders:[],activity:[],deletedOrders:[]
+  };
+}
+
+function collectMediaIds(value,out=new Set()){
+  if(value==null)return out;
+  if(typeof value==='string'){
+    const re=/\/api\/media\/([a-f0-9-]{20,64})/gi;let match;
+    while((match=re.exec(value)))out.add(match[1]);
+    return out;
+  }
+  if(Array.isArray(value)){for(const item of value)collectMediaIds(item,out);return out;}
+  if(typeof value==='object'){
+    if(typeof value.mediaId==='string'&&/^[a-f0-9-]{20,64}$/i.test(value.mediaId))out.add(value.mediaId);
+    for(const item of Object.values(value))collectMediaIds(item,out);
+  }
+  return out;
+}
+
+async function getDataEpoch(client=pool){
+  const result=await client.query(`SELECT meta_value FROM ar7_system_meta WHERE meta_key='data_epoch'`);
+  return String(result.rows[0]?.meta_value||'');
+}
+
+async function purgeUnreferencedMedia(client,state){
+  const ids=[...collectMediaIds(state)];
+  if(ids.length){await client.query(`DELETE FROM ar7_media WHERE NOT (id = ANY($1::text[]))`,[ids]);}
+  else{await client.query(`DELETE FROM ar7_media`);}
+}
 
 const pool = DATABASE_URL ? new Pool({
   connectionString: DATABASE_URL,
@@ -139,6 +191,21 @@ async function ensureSchema(){
         revision bigint,
         created_at timestamptz NOT NULL DEFAULT now()
       )`);
+      await pool.query(`CREATE TABLE IF NOT EXISTS ar7_media (
+        id text PRIMARY KEY,
+        content_type text NOT NULL,
+        data bytea NOT NULL,
+        size_bytes integer NOT NULL,
+        actor text NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )`);
+      await pool.query(`CREATE TABLE IF NOT EXISTS ar7_system_meta (
+        meta_key text PRIMARY KEY,
+        meta_value text NOT NULL,
+        updated_at timestamptz NOT NULL DEFAULT now()
+      )`);
+      await pool.query(`INSERT INTO ar7_system_meta(meta_key,meta_value) VALUES('data_epoch',$1)
+        ON CONFLICT (meta_key) DO NOTHING`,[crypto.randomUUID()]);
       return true;
     })().catch(error=>{schemaReadyPromise=null;throw error;});
   }
@@ -168,14 +235,88 @@ async function handleApi(req,res,url){
   if(url.pathname==='/api/auth/logout'&&req.method==='POST'){
     json(res,200,{ok:true},{'Set-Cookie':`ar7_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isHosted?'; Secure':''}`});return true;
   }
+  if(url.pathname==='/api/media'&&req.method==='POST'){
+    const session=requireAuth(req,res);if(!session)return true;
+    try{
+      await ensureSchema();
+      const body=await readJson(req,4*1024*1024);
+      const raw=String(body.dataUrl||'');
+      const match=raw.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/i);
+      if(!match){json(res,400,{ok:false,error:'Imagem inválida. Use JPEG, PNG ou WEBP.'});return true;}
+      const buffer=Buffer.from(match[2],'base64');
+      if(!buffer.length||buffer.length>MAX_MEDIA_BYTES){json(res,413,{ok:false,error:'A imagem compactada excede 2 MB.'});return true;}
+      const id=crypto.randomUUID();
+      const contentType=match[1].toLowerCase()==='image/jpg'?'image/jpeg':match[1].toLowerCase();
+      await pool.query(`INSERT INTO ar7_media(id,content_type,data,size_bytes,actor) VALUES($1,$2,$3,$4,$5)`,[id,contentType,buffer,buffer.length,session.u]);
+      json(res,201,{ok:true,id,url:`/api/media/${id}`,size:buffer.length,contentType});
+    }catch(error){console.error('POST /api/media',error);json(res,error.statusCode||503,{ok:false,error:error.statusCode===413?'Imagem excedeu o limite permitido.':'Não foi possível armazenar o anexo no banco central.'});}
+    return true;
+  }
+  if(/^\/api\/media\/[a-f0-9-]{20,64}$/i.test(url.pathname)&&req.method==='GET'){
+    const session=requireAuth(req,res);if(!session)return true;
+    try{
+      await ensureSchema();
+      const id=url.pathname.split('/').pop();
+      const result=await pool.query(`SELECT content_type,data,size_bytes FROM ar7_media WHERE id=$1`,[id]);
+      if(!result.rows.length){json(res,404,{ok:false,error:'Anexo não encontrado.'});return true;}
+      const row=result.rows[0];
+      res.writeHead(200,{
+        'Content-Type':row.content_type,
+        'Content-Length':String(row.size_bytes),
+        'Cache-Control':'no-store, no-cache, must-revalidate, private, max-age=0',
+        'Pragma':'no-cache','Expires':'0','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'same-origin'
+      });
+      res.end(row.data);
+    }catch(error){console.error('GET /api/media',error);json(res,503,{ok:false,error:'Não foi possível carregar o anexo.'});}
+    return true;
+  }
+  if(/^\/api\/media\/[a-f0-9-]{20,64}$/i.test(url.pathname)&&req.method==='DELETE'){
+    const session=requireAuth(req,res);if(!session)return true;
+    try{
+      await ensureSchema();
+      const id=url.pathname.split('/').pop();
+      const result=await pool.query(`DELETE FROM ar7_media WHERE id=$1`,[id]);
+      json(res,200,{ok:true,deleted:result.rowCount>0});
+    }catch(error){console.error('DELETE /api/media',error);json(res,503,{ok:false,error:'Não foi possível excluir o anexo.'});}
+    return true;
+  }
+  if(url.pathname==='/api/admin/purge'&&req.method==='POST'){
+    const session=requireAuth(req,res);if(!session)return true;
+    let client=null;
+    try{
+      const body=await readJson(req,64*1024);
+      if(String(body.confirm||'')!=='LIMPAR AR7'){json(res,400,{ok:false,error:'Confirmação inválida.'});return true;}
+      await ensureSchema();
+      client=await pool.connect();await client.query('BEGIN');
+      const currentState=await client.query(`SELECT data FROM ar7_app_state WHERE state_key='main' FOR UPDATE`);
+      const clean=emptyStateV206(currentState.rows[0]?.data||{});
+      const epoch=crypto.randomUUID();
+      const mediaCount=await client.query(`SELECT count(*)::int AS total FROM ar7_media`);
+      const stateResult=await client.query(`INSERT INTO ar7_app_state(state_key,data,revision,updated_at)
+        VALUES('main',$1::jsonb,1,now())
+        ON CONFLICT (state_key) DO UPDATE SET data=EXCLUDED.data, revision=ar7_app_state.revision+1, updated_at=now()
+        RETURNING revision,updated_at`,[JSON.stringify(clean)]);
+      await client.query(`DELETE FROM ar7_media`);
+      await client.query(`DELETE FROM ar7_audit_log`);
+      await client.query(`UPDATE ar7_system_meta SET meta_value=$1,updated_at=now() WHERE meta_key='data_epoch'`,[epoch]);
+      await client.query(`INSERT INTO ar7_audit_log(actor,action,revision) VALUES($1,$2,$3)`,[session.u,'data-purge',Number(stateResult.rows[0].revision)]);
+      await client.query('COMMIT');
+      json(res,200,{ok:true,purged:true,data:clean,revision:Number(stateResult.rows[0].revision),updatedAt:stateResult.rows[0].updated_at,dataEpoch:epoch,mediaDeleted:Number(mediaCount.rows[0]?.total||0)});
+    }catch(error){if(client){try{await client.query('ROLLBACK');}catch{}}console.error('POST /api/admin/purge',error);json(res,error.statusCode||503,{ok:false,error:'Não foi possível concluir a limpeza definitiva.'});}
+    finally{client?.release?.();}
+    return true;
+  }
   if(url.pathname==='/api/state'&&req.method==='GET'){
     const session=requireAuth(req,res);if(!session)return true;
     try{
       await ensureSchema();
-      const result=await pool.query(`SELECT data, revision, updated_at FROM ar7_app_state WHERE state_key='main'`);
-      if(!result.rows.length){json(res,404,{ok:false,empty:true});return true;}
+      await pool.query(`INSERT INTO ar7_app_state(state_key,data,revision,updated_at) VALUES('main',$1::jsonb,1,now()) ON CONFLICT (state_key) DO NOTHING`,[JSON.stringify(emptyStateV206())]);
+      const [result,epoch]=await Promise.all([
+        pool.query(`SELECT data, revision, updated_at FROM ar7_app_state WHERE state_key='main'`),
+        getDataEpoch()
+      ]);
       const row=result.rows[0];
-      json(res,200,{ok:true,data:row.data,revision:Number(row.revision),updatedAt:row.updated_at});
+      json(res,200,{ok:true,data:row.data,revision:Number(row.revision),updatedAt:row.updated_at,dataEpoch:epoch,remoteOnly:true});
     }catch(error){console.error('GET /api/state',error);json(res,503,{ok:false,error:'Banco de dados indisponível.'});}
     return true;
   }
@@ -184,18 +325,26 @@ async function handleApi(req,res,url){
     let client=null;
     try{
       const body=await readJson(req);
+      if(!releaseAtLeast(body.clientVersion,MIN_WRITE_RELEASE)){
+        json(res,426,{ok:false,updateRequired:true,minVersion:MIN_WRITE_RELEASE,error:'Este dispositivo está com uma versão antiga. Recarregue o AR7 antes de salvar.'});return true;
+      }
       if(!body||typeof body.data!=='object'||Array.isArray(body.data)){json(res,400,{ok:false,error:'Estado inválido.'});return true;}
       const expectedRevision=Number(body.expectedRevision);
       if(!Number.isInteger(expectedRevision)||expectedRevision<0){json(res,400,{ok:false,error:'Revisão de sincronização inválida.'});return true;}
       await ensureSchema();
       client=await pool.connect();
       await client.query('BEGIN');
+      const currentEpoch=await getDataEpoch(client);
+      if(!body.expectedEpoch||String(body.expectedEpoch)!==currentEpoch){
+        await client.query('ROLLBACK');
+        json(res,409,{ok:false,resetRequired:true,dataEpoch:currentEpoch,error:'Os dados centrais foram reinicializados. Recarregue o sistema; dados antigos deste dispositivo não serão reenviados.'});return true;
+      }
       const current=await client.query(`SELECT revision FROM ar7_app_state WHERE state_key='main' FOR UPDATE`);
       let row;
       if(!current.rows.length){
         if(expectedRevision!==0){
           await client.query('ROLLBACK');
-          json(res,409,{ok:false,conflict:true,currentRevision:0,error:'O banco central foi reinicializado. Recarregue os dados antes de salvar.'});return true;
+          json(res,409,{ok:false,conflict:true,currentRevision:0,dataEpoch:currentEpoch,error:'O banco central foi reinicializado. Recarregue os dados antes de salvar.'});return true;
         }
         const inserted=await client.query(`INSERT INTO ar7_app_state(state_key,data,revision,updated_at) VALUES('main',$1::jsonb,1,now()) RETURNING revision,updated_at`,[JSON.stringify(body.data)]);
         row=inserted.rows[0];
@@ -203,14 +352,15 @@ async function handleApi(req,res,url){
         const currentRevision=Number(current.rows[0].revision);
         if(currentRevision!==expectedRevision){
           await client.query('ROLLBACK');
-          json(res,409,{ok:false,conflict:true,currentRevision,error:'Outro dispositivo salvou alterações antes deste. Recarregue o banco central antes de continuar.'});return true;
+          json(res,409,{ok:false,conflict:true,currentRevision,dataEpoch:currentEpoch,error:'Outro dispositivo salvou alterações antes deste. Recarregue o banco central antes de continuar.'});return true;
         }
         const updated=await client.query(`UPDATE ar7_app_state SET data=$1::jsonb, revision=revision+1, updated_at=now() WHERE state_key='main' RETURNING revision,updated_at`,[JSON.stringify(body.data)]);
         row=updated.rows[0];
       }
+      await purgeUnreferencedMedia(client,body.data);
       await client.query(`INSERT INTO ar7_audit_log(actor,action,revision) VALUES($1,$2,$3)`,[session.u,'state-save',Number(row.revision)]);
       await client.query('COMMIT');
-      json(res,200,{ok:true,revision:Number(row.revision),updatedAt:row.updated_at});
+      json(res,200,{ok:true,revision:Number(row.revision),updatedAt:row.updated_at,dataEpoch:currentEpoch});
     }catch(error){
       if(client){try{await client.query('ROLLBACK');}catch{}}
       console.error('PUT /api/state',error);json(res,error.statusCode||503,{ok:false,error:error.statusCode===413?'Dados excederam o limite de sincronização.':'Não foi possível salvar no banco central.'});
@@ -219,7 +369,7 @@ async function handleApi(req,res,url){
   }
   if(url.pathname==='/api/sync-status'&&req.method==='GET'){
     const session=requireAuth(req,res);if(!session)return true;
-    try{await ensureSchema();const result=await pool.query(`SELECT revision,updated_at FROM ar7_app_state WHERE state_key='main'`);json(res,200,{ok:true,database:true,state:result.rows[0]||null});}
+    try{await ensureSchema();const [result,epoch]=await Promise.all([pool.query(`SELECT revision,updated_at FROM ar7_app_state WHERE state_key='main'`),getDataEpoch()]);json(res,200,{ok:true,database:true,state:result.rows[0]||null,dataEpoch:epoch,remoteOnly:true});}
     catch(error){json(res,503,{ok:false,database:false,error:error.message});}
     return true;
   }
@@ -231,7 +381,7 @@ async function requestHandler(req,res){
   if(url.pathname==='/health'){
     let database=false;
     if(pool){try{await ensureSchema();await pool.query('SELECT 1');database=true;}catch(error){console.error('Health database check',error.message);}}
-    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.5',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
+    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.6',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
   }
   if(url.pathname.startsWith('/api/')){
     try{if(await handleApi(req,res,url))return;}catch(error){console.error('API error',error);json(res,error.statusCode||500,{ok:false,error:'Erro interno da API.'});return;}
@@ -270,7 +420,7 @@ function listenOn(candidate){
     server=candidateServer;
     const url=`http://localhost:${candidate}/#dashboard`;
     console.log('==============================================================');
-    console.log(' AR7 Gestao da Oficina V20.2.5 - Revisao Geral + Banco Central');
+    console.log(' AR7 Gestao da Oficina V20.2.6 - Banco central sem persistencia local');
     console.log(` Servidor: ${host}:${candidate}`);
     console.log(` Acesso local: ${url}`);
     console.log(` Banco central: ${DATABASE_URL?'configurado':'NAO configurado'}`);

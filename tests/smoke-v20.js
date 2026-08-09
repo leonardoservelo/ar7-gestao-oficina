@@ -17,7 +17,7 @@ function stop(child){if(!child||child.killed)return;child.kill('SIGTERM');setTim
 
 (async()=>{
   const app=read('app.js'),css=read('styles.css'),server=read('server.js'),serverPy=read('server.py'),index=read('index.html'),pkg=JSON.parse(read('package.json'));
-  check('app.js preparado para V20.2.5',app.includes("const APP_RELEASE = '20.2.5'")&&app.includes('const APP_VERSION = 20.2'));
+  check('app.js preparado para V20.2.6',app.includes("const APP_RELEASE = '20.2.6'")&&app.includes('const APP_VERSION = 20.2'));
   check('sincronização remota V20 existe',app.includes('initRemoteSyncV20')&&app.includes("fetchV20('/api/state'")&&app.includes('scheduleRemoteSaveV20'));
   check('login multi-dispositivo existe',app.includes('loginOverlayV20')&&server.includes('/api/auth/login')&&server.includes('ar7_session'));
   check('API de estado central existe',server.includes("'/api/state'")&&server.includes('ar7_app_state')&&server.includes('jsonb'));
@@ -26,7 +26,7 @@ function stop(child){if(!child||child.killed)return;child.kill('SIGTERM');setTim
   check('galeria separada da camera no tablet',app.includes('Escolher da galeria')&&app.includes('photo-upload-actions-v201')&&app.includes('wizard-photo-actions-v201'));
   check('fotos grandes sao compactadas automaticamente',app.includes('PHOTO_MAX_SOURCE_BYTES_V201=35*1024*1024')&&app.includes('PHOTO_TARGET_BYTES_V201=420*1024')&&app.includes('canvasDataUrlV201'));
   check('limite antigo de 4 MB foi removido',!app.includes('4_000_000')&&!app.includes('excede 4 MB'));
-  check('sincronizacao remota nao depende do limite do localStorage',app.includes('if(remoteInitialSyncDoneV20)scheduleRemoteSaveV20()')&&app.includes('Cache local cheio; dados continuam disponíveis pelo banco central.'));
+  check('producao nao persiste banco da oficina no dispositivo',app.includes('REMOTE_ONLY_V206')&&app.includes('clearDeviceBusinessDataV206')&&app.includes('if(REMOTE_ONLY_V206){clearDeviceBusinessDataV206();return true;}'));
   check('etapas comerciais renomeadas e separadas',app.includes("label:'Peças do orçamento'")&&app.includes("label:'Revisão da proposta'"));
   check('primeira etapa comercial sem frete/mao de obra/desconto',app.includes('quotation-parts-only-v202')&&app.includes('Frete, mão de obra, terceiros, tributos, desconto')&&app.includes('quotationTotalsV11=function(order)')&&app.includes('return {partsCost,laborCost:0,thirdPartyCost:0,otherCost:0,totalCost:partsCost}'));
   check('valores comerciais concentrados na revisão',app.includes('commercial-values-v202')&&app.includes('budget-freight-v11')&&app.includes('budget-discount-v11')&&app.includes('budget-tax-v11'));
@@ -46,27 +46,27 @@ function stop(child){if(!child||child.killed)return;child.kill('SIGTERM');setTim
   check('assinaturas da proposta possuem area livre e segura',css.includes('.proposal-signatures-v203>div')&&css.includes('height:42px!important')&&css.includes('height:11mm!important'));
   check('reset destrutivo automatico foi removido',app.includes('function applyOrderResetV19()')&&!app.includes('  applyOrderResetV19();'));
   check('datas usam calendario local e formatacao tolera valor invalido',app.includes('function validDate(value, dateOnly=false)')&&app.includes('d.getFullYear()')&&!app.includes("new Date().toISOString().slice(0,10)"));
-  check('versao visual e cache estao consistentes',index.includes('styles.css?v=20.2.5')&&index.includes('app.js?v=20.2.5')&&index.includes('manifest.webmanifest?v=20.2.5')&&app.includes('v${APP_RELEASE}'));
+  check('versao visual e cache estao consistentes',index.includes('styles.css?v=20.2.6')&&index.includes('app.js?v=20.2.6')&&index.includes('manifest.webmanifest?v=20.2.6')&&app.includes('v${APP_RELEASE}'));
   check('buscas e filtros possuem rotulos de acessibilidade',app.includes('Pesquisar ordem de serviço, cliente ou TAG')&&app.includes('Filtrar ordens por etapa')&&app.includes('Pesquisar cliente, contato ou cidade'));
   check('revisao geral de alinhamento e responsividade aplicada',css.includes('AR7 V20.2.3 — revisão geral de interface e responsividade')&&css.includes('@media(prefers-reduced-motion:reduce)')&&css.includes('.settings-danger-note-v2022'));
   check('sincronizacao evita sobrescrita silenciosa entre dispositivos',app.includes('expectedRevision:remoteRevisionV20')&&app.includes("response.status===409&&payload.conflict")&&server.includes("currentRevision!==expectedRevision")&&server.includes("json(res,409,{ok:false,conflict:true"));
-  check('conflito de sincronizacao preserva backup local',app.includes('ar7-sync-conflict-backup-v2022')&&app.includes("remoteStatusV20('conflict'"));
+  check('conflito de sincronizacao nao cria backup persistente em producao',app.includes("remoteStatusV20('conflict'")&&!app.includes("localStorage.setItem('ar7-sync-conflict-backup-v2022'"));
   check('cabecalhos de seguranca basicos ativos',server.includes("'X-Frame-Options':'DENY'")&&server.includes("'Permissions-Policy':'camera=(self), microphone=(), geolocation=()'"));
-  check('package start correto',pkg.scripts?.start==='node server.js'&&pkg.version==='20.2.5');
-  check('healthcheck informa banco central',server.includes('databaseConnected')&&server.includes("version:'20.2.5'"));
-  check('alteracoes offline sobrevivem a recarga',app.includes("REMOTE_PENDING_KEY_V2022='ar7-remote-pending-v2022'")&&app.includes("REMOTE_REVISION_KEY_V2022='ar7-remote-revision-v2022'")&&app.includes('markRemotePendingV2022')&&app.includes('clearRemotePendingV2022'));
-  check('estado pendente e enviado antes do pull inicial',app.includes("const hadPending=localStorage.getItem(REMOTE_PENDING_KEY_V2022)==='1'")&&app.includes('if(initial&&remoteDirtyV20)')&&app.includes('const pushed=await pushRemoteStateV20()'));
+  check('package start correto',pkg.scripts?.start==='node server.js'&&pkg.version==='20.2.6');
+  check('healthcheck informa banco central',server.includes('databaseConnected')&&server.includes("version:'20.2.6'"));
+  check('alteracoes offline ficam somente na sessao em producao',app.includes('Alteração pendente nesta sessão; nada foi gravado no dispositivo')&&app.includes('if(REMOTE_ONLY_V206)return;'));
+  check('estado local antigo nao e reenviado em producao',app.includes("const hadPending=!REMOTE_ONLY_V206&&localStorage.getItem(REMOTE_PENDING_KEY_V2022)==='1'")&&server.includes('MIN_WRITE_RELEASE')&&server.includes('expectedEpoch'));
   check('login possui limitacao de tentativas',server.includes('LOGIN_MAX_ATTEMPTS = 8')&&server.includes('LOGIN_WINDOW_MS')&&server.includes('loginBlocked(req)')&&server.includes('recordLoginFailure(req)')&&server.includes('json(res,429'));
   check('modo local nao prende usuario na tela de login',server.includes("configured:false")&&server.includes("Autenticação do servidor ainda não configurada")&&app.includes("if(response.status===503){remoteStatusV20('local'"));
-  check('servidor Python de contingencia nao prende login e informa versao atual',serverPy.includes("'version':'20.2.5'")&&serverPy.includes("route == '/api/auth/status'")&&serverPy.includes('self._json(503')&&serverPy.includes('API central indisponível no servidor Python local'));
+  check('servidor Python de contingencia nao prende login e informa versao atual',serverPy.includes("'version':'20.2.6'")&&serverPy.includes("route == '/api/auth/status'")&&serverPy.includes('self._json(503')&&serverPy.includes('API central indisponível no servidor Python local'));
   check('importacao de backup valida tamanho e estrutura',app.includes('file.size>60*1024*1024')&&app.includes('Array.isArray(parsed.orders)')&&app.includes('Array.isArray(parsed.clients)')&&app.includes('Array.isArray(parsed.equipment)')&&app.includes('Importar este backup substituirá os dados locais atuais'));
-  check('reset de demonstracao exige aviso forte',app.includes('ATENÇÃO: esta ação substitui os dados locais atuais pelos dados de demonstração'));
+  check('limpeza definitiva exige confirmacao forte',app.includes('LIMPAR AR7')&&app.includes('executePurgeV206')&&server.includes("'/api/admin/purge'"));
   check('campos criticos das etapas possuem rotulos associados',app.includes('for="stage-entry-date"')&&app.includes('for="stage-record"')&&app.includes('for="quotation-responsible-v11"')&&app.includes('for="budget-scope-v11"')&&app.includes('for="budget-recipient-v11"'));
   check('OS concluida nao oferece salvar etapa novamente',app.includes("order.stage==='concluida'?'':")&&app.includes('data-action="save-stage"'));
   check('acao de aprovacao pendente informa espera pelo cliente',app.includes("approvalGrantedV10(order)?'Aprovação registrada: liberar próxima equipe':'Aguardando aprovação do cliente'"));
   check('configuracoes se adaptam a telas estreitas',app.includes('settings-grid-v2022')&&css.includes('.settings-grid-v2022{grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))}'));
   check('fontes de imagens dinamicas sao escapadas',app.includes('src="${safe(part.photo)}"')&&app.includes('src="${safe(normalized.src)}"'));
-  check('auditorias estruturais acompanham o pacote',pkg.scripts?.['test:ui']==='node tests/ui-audit-v20.js'&&pkg.scripts?.['test:docs']==='node tests/document-audit-v203.js'&&pkg.scripts?.['test:commercial']==='node tests/commercial-audit-v204.js'&&pkg.scripts?.['test:hotfix']==='node tests/hotfix-audit-v205.js'&&pkg.scripts?.['test:all']==='npm test && npm run test:ui && npm run test:docs && npm run test:commercial && npm run test:hotfix'&&fs.existsSync(path.join(root,'tests','ui-audit-v20.js'))&&fs.existsSync(path.join(root,'tests','document-audit-v203.js'))&&fs.existsSync(path.join(root,'tests','commercial-audit-v204.js'))&&fs.existsSync(path.join(root,'tests','hotfix-audit-v205.js')));
+  check('auditorias estruturais acompanham o pacote',pkg.scripts?.['test:ui']==='node tests/ui-audit-v20.js'&&pkg.scripts?.['test:docs']==='node tests/document-audit-v203.js'&&pkg.scripts?.['test:commercial']==='node tests/commercial-audit-v204.js'&&pkg.scripts?.['test:hotfix']==='node tests/hotfix-audit-v205.js'&&pkg.scripts?.['test:privacy']==='node tests/privacy-storage-audit-v206.js'&&pkg.scripts?.['test:all']==='npm test && npm run test:ui && npm run test:docs && npm run test:commercial && npm run test:hotfix && npm run test:privacy'&&fs.existsSync(path.join(root,'tests','ui-audit-v20.js'))&&fs.existsSync(path.join(root,'tests','document-audit-v203.js'))&&fs.existsSync(path.join(root,'tests','commercial-audit-v204.js'))&&fs.existsSync(path.join(root,'tests','hotfix-audit-v205.js'))&&fs.existsSync(path.join(root,'tests','privacy-storage-audit-v206.js')));
 
   check('dashboard destaca proposta negada com atalho direto',app.includes('rejectedProposalQueueV204')&&app.includes('Proposta negada')&&app.includes('href="#order/${item.order.id}"'));
   check('proposta executiva V20.2.4 em duas paginas esta ativa',app.includes('proposal-document-v204')&&app.includes('Prezados,')&&app.includes('Composição e condições comerciais')&&app.includes('· 1/2')&&app.includes('· 2/2')&&css.includes('.proposal-document-v204'));
@@ -75,7 +75,7 @@ function stop(child){if(!child||child.killed)return;child.kill('SIGTERM');setTim
   const first=spawn(process.execPath,['server.js',String(base)],{cwd:root,stdio:'ignore'});
   const firstHealth=await waitProbe(base);
   let payload={};try{payload=JSON.parse(firstHealth.body||'{}');}catch{}
-  check('servidor local V20.2.5 inicia sem DATABASE_URL',firstHealth.ok&&payload.version==='20.2.5'&&payload.databaseConfigured===false);
+  check('servidor local V20.2.6 inicia sem DATABASE_URL',firstHealth.ok&&payload.version==='20.2.6'&&payload.databaseConfigured===false);
   const fallback=spawn(process.execPath,['server.js',String(base),'--auto-port'],{cwd:root,stdio:'ignore'});
   const fallbackHealth=await waitProbe(base+1);
   check('porta local ocupada muda automaticamente',fallbackHealth.ok);

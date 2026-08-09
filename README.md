@@ -1,4 +1,4 @@
-# AR7 Gestão da Oficina V20.2.5
+# AR7 Gestão da Oficina V20.2.6
 
 Versão multi-dispositivo com banco central PostgreSQL.
 
@@ -143,12 +143,9 @@ A passagem entre etapas respeita os requisitos de prontidão. Ações pendentes 
 
 ## Notas para produção
 
-A V20.2.3 mantém propositalmente a arquitetura de estado central em JSONB para reduzir o risco desta etapa de implantação. Ela é adequada para o piloto e para evolução controlada, mas há dois pontos que devem entrar no planejamento de produção em escala:
+A V20.2.6 mantém o estado operacional central em PostgreSQL e passa a armazenar fotos/anexos em uma tabela binária separada (`ar7_media`), deixando no estado apenas referências. Em produção hospedada, o navegador não mantém uma cópia persistente do banco operacional.
 
-1. **Fotos:** hoje as imagens compactadas fazem parte do estado da aplicação. Com alto volume histórico, o ideal é migrar as imagens para object storage e manter no banco apenas metadados/URLs.
-2. **Usuários e permissões:** o servidor possui autenticação administrativa central. Para rastreabilidade individual de técnico, compras, supervisor e administrador, a próxima camada de produção deve adotar contas e permissões por usuário no servidor.
-
-Esses pontos não impedem a demonstração nem o piloto controlado, mas devem ser tratados antes de ampliar a solução para múltiplas oficinas ou grande volume de fotos simultâneas.
+Para evolução em escala, ainda vale planejar **contas e permissões individuais por usuário** e, quando o volume de mídia crescer, avaliar object storage dedicado. Para o piloto atual, a mídia centralizada no PostgreSQL reduz a exposição em dispositivos e simplifica a implantação.
 
 ## V20.2.3 — acabamento premium dos documentos
 
@@ -207,3 +204,17 @@ Além da auditoria geral, a versão inclui:
 - Camada preventiva corrige textos persistidos com mojibake comum de UTF-8/Windows-1252 sem alterar imagens.
 - Fallback de erro mantém navegação segura de volta ao Dashboard e às Ordens de Serviço.
 - Auditoria de estados vazios cobre todas as áreas principais.
+
+
+## V20.2.6 — armazenamento central e limpeza definitiva
+
+- Produção HTTPS opera sem persistir clientes, OS, histórico ou anexos em `localStorage`.
+- Dados de demonstração foram removidos da base inicial.
+- Fotos e anexos são compactados em memória e enviados ao PostgreSQL; o estado guarda apenas a referência central.
+- Mídias são servidas com política `no-store` e os caches próprios do AR7 são limpos.
+- A captura direta usa `getUserMedia`, evitando que o AR7 solicite gravação da foto na galeria.
+- A área Configurações ganhou **Limpeza definitiva**, com frase `LIMPAR AR7` e confirmação adicional.
+- A limpeza troca o `data_epoch` do banco. Clientes antigos ou abas ainda abertas não conseguem restaurar os dados apagados.
+- Versões anteriores à 20.2.6 são recusadas para novas gravações no estado central.
+- Mídias sem referência são removidas automaticamente quando o estado é salvo.
+- O script `LIMPAR-PRODUCAO-APOS-DEPLOY.ps1` executa a limpeza somente depois de confirmar que a V20.2.6 está online e conectada ao PostgreSQL.

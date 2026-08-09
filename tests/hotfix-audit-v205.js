@@ -24,10 +24,10 @@ const routes=['#dashboard','#orders','#clients','#equipment','#parts','#budgets'
 for(const route of routes){const html=renderHash(route);check(`${route} abre com banco vazio`,html.length>500&&!html.includes('Não foi possível abrir esta tela'));}
 const reports=renderHash('#reports');check('Relatórios vazio orienta sem erro',reports.includes('Nenhum relatório disponível')&&reports.includes('Voltar ao dashboard'));
 const portal=renderHash('#portal');check('Portal vazio orienta cadastro sem erro',portal.includes('Nenhum cliente disponível para o portal')&&portal.includes('Cadastrar cliente')&&portal.includes('Voltar ao dashboard'));
-const dashboard=renderHash('#dashboard');check('topo direito mostra apenas desenvolvedor e versão',dashboard.includes('developer-workspace-v205')&&dashboard.includes('Nexora Sistemas')&&dashboard.includes('v20.2.5')&&!/developer-workspace-v205[^>]*>[^<]*AR7 El/i.test(dashboard));
+const dashboard=renderHash('#dashboard');check('topo direito mostra apenas desenvolvedor e versão',dashboard.includes('developer-workspace-v205')&&dashboard.includes('Nexora Sistemas')&&dashboard.includes('v20.2.6')&&!/developer-workspace-v205[^>]*>[^<]*AR7 El/i.test(dashboard));
 check('corrige mojibake de acentos',__ar7Hotfix.repairTextEncodingV205('AR7 ElÃ©trica')==='AR7 Elétrica'&&__ar7Hotfix.repairTextEncodingV205('RelatÃ³rio tÃ©cnico')==='Relatório técnico');
 check('corrige mojibake de pontuação',__ar7Hotfix.repairTextEncodingV205('Proposta â€” revisÃ£o')==='Proposta — revisão');
 const suspicious=/(?:Ã[\u0080-\u00BF]|Â[\u0080-\u00BF]|â[€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]|ðŸ|ï»¿|�)/;
 check('HTML renderizado não expõe mojibake',!suspicious.test(dashboard)&&!suspicious.test(reports)&&!suspicious.test(portal));
 Object.assign(db,old);
-console.log(`\n${passed}/${total} verificações V20.2.5 aprovadas.`);if(passed!==total)process.exit(1);
+console.log(`\n${passed}/${total} verificações V20.2.6 aprovadas.`);if(passed!==total)process.exit(1);

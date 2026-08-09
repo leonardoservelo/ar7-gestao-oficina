@@ -3,7 +3,7 @@
 
   const DB_KEY = 'ar7-oficina-db-v2';
   const APP_VERSION = 20.2;
-  const APP_RELEASE = '20.2.5';
+  const APP_RELEASE = '20.2.6';
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -18,6 +18,26 @@
   const EQUIPMENT_TYPES = ['Motoredutor','Motor elétrico','Bomba','Redutor','Ventilador','Compressor','Exaustor','Gerador','Outro'];
   const MANUFACTURERS = ['WEG','SEW','Siemens','KSB','Schneider','ABB','NORD','Bonfiglioli','Voges','Marathon','OTAM'];
   const COMMON_PARTS = ['Rolamento','Retentor','Selo mecânico','O-ring','Ventoinha','Tampa','Eixo','Bucha','Acoplamento','Junta','Bobina','Capacitor'];
+  const REMOTE_ONLY_V206 = location.protocol === 'https:' && !['localhost','127.0.0.1'].includes(location.hostname);
+  const DEVICE_DATA_KEYS_V206 = [DB_KEY,'ar7-sync-conflict-backup-v2022','ar7-remote-revision-v2022','ar7-remote-pending-v2022'];
+
+  function emptyDBV206(){
+    return {
+      version:APP_VERSION,
+      company:{name:'AR7 Elétrica',unit:'Matriz',email:'relatorios@ar7eletrica.com.br'},
+      catalog:{equipmentDescriptions:[],manufacturers:[...MANUFACTURERS],partNames:[...COMMON_PARTS]},
+      clients:[],equipment:[],orders:[],activity:[],deletedOrders:[]
+    };
+  }
+
+  function clearDeviceBusinessDataV206(){
+    if(!REMOTE_ONLY_V206)return;
+    try{
+      for(const key of DEVICE_DATA_KEYS_V206)localStorage.removeItem(key);
+      for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(key&&/^ar7-(?:oficina-db|sync-conflict|remote-pending|remote-revision)/i.test(key))localStorage.removeItem(key);}
+      sessionStorage.clear();
+    }catch{}
+  }
 
   const icon = (name, size = 20) => {
     const paths = {
@@ -57,66 +77,7 @@
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   }
 
-  const seedDB = () => ({
-    version: APP_VERSION,
-    company: { name: 'AR7 Elétrica', unit: 'Matriz', email: 'relatorios@ar7eletrica.com.br' },
-    catalog: { equipmentDescriptions:['Motor WEG 3 cv','Motor SEW 5 cv','Motor Siemens 10 cv','Bomba KSB 80-200','Motoredutor SEW R87'], manufacturers:MANUFACTURERS, partNames:COMMON_PARTS },
-    clients: [
-      { id:'c1', name:'Sanepar', contact:'Marcos Lima', email:'manutencao@sanepar.com.br', active:true },
-      { id:'c2', name:'Ceará Alimentos', contact:'Paulo Mendes', email:'engenharia@cearaalimentos.com.br', active:true },
-      { id:'c3', name:'Usina Verde', contact:'Carla Souza', email:'manutencao@usinaverde.com.br', active:true },
-      { id:'c4', name:'Metalúrgica JL', contact:'Renato Alves', email:'pcm@metalurgicajl.com.br', active:true }
-    ],
-    equipment: [
-      { id:'e1', clientId:'c1', tag:'BBA-205', description:'Bomba KSB 80-200 30 cv', type:'Bomba', manufacturer:'KSB', model:'80-200', power:'30 cv / 22 kW / 4P', serial:'KSB-88931' },
-      { id:'e2', clientId:'c2', tag:'MTR-302', description:'Motor WEG W22 50 cv', type:'Motor elétrico', manufacturer:'WEG', model:'W22 Alto Rendimento', power:'50 cv / 37 kW / 4P', serial:'WEG-143872' },
-      { id:'e3', clientId:'c3', tag:'MTR-409', description:'Motor WEG W21 75 cv', type:'Motor elétrico', manufacturer:'WEG', model:'W21', power:'75 cv / 55 kW / 4P', serial:'WEG-762110' },
-      { id:'e4', clientId:'c4', tag:'RED-707', description:'Redutor SEW R87 i=18,2', type:'Redutor', manufacturer:'SEW', model:'R87', power:'i=18,2', serial:'SEW-902211' },
-      { id:'e5', clientId:'c1', tag:'MTR-101', description:'Motor WEG W22 20 cv', type:'Motor elétrico', manufacturer:'WEG', model:'W22', power:'20 cv / 15 kW / 4P', serial:'WEG-351112' },
-      { id:'e6', clientId:'c3', tag:'VNT-501', description:'Ventilador OTAM VTR-600 15 cv', type:'Ventilador', manufacturer:'OTAM', model:'VTR-600', power:'15 cv', serial:'OT-33019' }
-    ],
-    orders: [
-      {
-        id:'o1247', number:'1247', clientId:'c1', equipmentId:'e1', entryDate:'2026-08-01', dueDate:'2026-08-10',
-        stage:'pecas', defect:'Ruído excessivo e vibração elevada', technician:'João Silva', supervisor:'Carlos Alberto',
-        notes:'Rolamentos com desgaste avançado e folga axial acima do especificado. Ruído causado por falha nos rolamentos e desalinhamento leve no acoplamento.',
-        parts:[
-          {id:'p1',name:'Rolamento dianteiro',code:'6208-2RS1',dimensions:'40 × 80 × 18 mm',quantity:'1',unit:'un',position:'Mancal dianteiro',technicalNote:'Blindado 2RS; confirmar folga conforme aplicação.',status:'Recebida',requestedBy:'João Silva',purchase:{supplier:'Rolamentos ABC',expectedDate:'2026-08-05',quote:'',price:'',note:'',location:'Caixa OS 1247'}},
-          {id:'p2',name:'Rolamento traseiro',code:'6206-2RS1',dimensions:'30 × 62 × 16 mm',quantity:'1',unit:'un',position:'Mancal traseiro',technicalNote:'Blindado 2RS; confirmar folga conforme aplicação.',status:'Recebida',requestedBy:'João Silva',purchase:{supplier:'Rolamentos ABC',expectedDate:'2026-08-05',quote:'',price:'',note:'',location:'Caixa OS 1247'}},
-          {id:'p3',name:'Retentor',code:'RET-TC',dimensions:'45 × 62 × 10 mm',quantity:'1',unit:'un',position:'Eixo dianteiro',technicalNote:'Perfil TC; material compatível com óleo e temperatura de trabalho.',status:'Comprada',requestedBy:'João Silva',purchase:{supplier:'Vedatec',expectedDate:'2026-08-07',quote:'',price:'',note:'',location:'Aguardando entrega'}},
-          {id:'p4',name:'Vedação O-Ring',code:'AS-568-214',dimensions:'25,07 × 3,53 mm',quantity:'1',unit:'un',position:'Tampa do mancal',technicalNote:'Confirmar material conforme fluido e temperatura.',status:'Solicitada',requestedBy:'João Silva',purchase:{supplier:'',expectedDate:'',quote:'',price:'',note:'',location:''}}
-        ],
-        measurements:[
-          {name:'Vibração radial X',unit:'mm/s',before:'6,8',after:'2,1',limit:'≤ 4,5'},
-          {name:'Vibração radial Y',unit:'mm/s',before:'7,2',after:'2,3',limit:'≤ 4,5'},
-          {name:'Temperatura mancal D.E.',unit:'°C',before:'68,5',after:'42,3',limit:'≤ 80'},
-          {name:'Corrente do motor',unit:'A',before:'18,6',after:'17,9',limit:'≤ 24'}
-        ],
-        photos:{before:[svgPhoto('Antes do serviço','#285d86')],during:[svgPhoto('Durante o serviço','#8f5e22')],after:[]},
-        report:{approved:false,sent:false,scheduledAt:'',sentAt:'',recipient:'manutencao@sanepar.com.br'}
-      },
-      {
-        id:'o1243', number:'1243', clientId:'c2', equipmentId:'e2', entryDate:'2026-07-29', dueDate:'2026-08-08', stage:'aprovacao', defect:'Baixa isolação', technician:'Mário Santos', supervisor:'Carlos Alberto', notes:'Diagnóstico concluído e proposta encaminhada para avaliação do cliente.', records:{diagnosis:'Foi identificada baixa resistência de isolamento nos enrolamentos, com necessidade de limpeza técnica, secagem controlada, reimpregnação e nova bateria de ensaios antes da montagem.',assembly:'',tests:'',conclusion:'',recommendations:''}, approval:{required:true,status:'Aguardando aprovação',scope:'Limpeza técnica, secagem controlada, reimpregnação dos enrolamentos e ensaios elétricos finais.',amount:'4850.00',terms:'Prazo estimado de 7 dias úteis após a aprovação e disponibilidade dos materiais.',recipient:'engenharia@cearaalimentos.com.br',sentAt:'2026-08-05T14:00:00',decidedAt:'',decidedBy:'',clientComment:'',validUntil:'2026-08-12'}, parts:[], noPartsRequired:true, measurements:[], photos:{before:[svgPhoto('Motor recebido','#3b5b7f')],during:[svgPhoto('Diagnóstico elétrico','#7b552a')],after:[]}, report:{approved:false,sent:false,scheduledAt:'',sentAt:'',recipient:'engenharia@cearaalimentos.com.br'}
-      },
-      {
-        id:'o1239', number:'1239', clientId:'c3', equipmentId:'e3', entryDate:'2026-07-22', dueDate:'2026-08-03', stage:'montagem', defect:'Queima de bobinamento', technician:'Pedro Lima', supervisor:'Carlos Alberto', notes:'Rebobinamento concluído. Em processo de montagem e balanceamento.', parts:[{id:'p5',name:'Rolamento 6312 C3',code:'6312-C3',qty:'2 un',status:'Instalada',responsible:'Pedro Lima',supplier:'SKF',due:'2026-07-28',location:'Instalada'}], measurements:[{name:'Resistência de isolação',unit:'GΩ',before:'0,02',after:'8,4',limit:'≥ 1'}], photos:{before:[svgPhoto('Bobinamento danificado','#704148')],during:[svgPhoto('Rebobinamento','#7b552a')],after:[]}, report:{approved:false,sent:false,scheduledAt:'',sentAt:'',recipient:'manutencao@usinaverde.com.br'}
-      },
-      {
-        id:'o1236', number:'1236', clientId:'c1', equipmentId:'e5', entryDate:'2026-07-18', dueDate:'2026-08-01', stage:'testes', defect:'Aquecimento no mancal', technician:'João Silva', supervisor:'Carlos Alberto', notes:'Peças substituídas, equipamento em testes finais.', parts:[{id:'p6',name:'Rolamento 6309 C3',code:'6309-C3',qty:'2 un',status:'Instalada',responsible:'João Silva',supplier:'NSK',due:'2026-07-22',location:'Instalada'}], measurements:[{name:'Vibração global',unit:'mm/s',before:'8,1',after:'1,9',limit:'≤ 4,5'}], photos:{before:[svgPhoto('Antes','#385d7e')],during:[svgPhoto('Substituição','#7e5b35')],after:[svgPhoto('Equipamento pronto','#18745a')]}, report:{approved:false,sent:false,scheduledAt:'',sentAt:'',recipient:'manutencao@sanepar.com.br'}
-      },
-      {
-        id:'o1231', number:'1231', clientId:'c3', equipmentId:'e6', entryDate:'2026-07-12', dueDate:'2026-07-25', stage:'concluida', defect:'Vibração estrutural', technician:'Pedro Lima', supervisor:'Carlos Alberto', notes:'Serviço concluído com balanceamento dinâmico e substituição de rolamentos.', parts:[{id:'p7',name:'Rolamento 22210',code:'22210-E',qty:'2 un',status:'Instalada',responsible:'Pedro Lima',supplier:'FAG',due:'2026-07-16',location:'Instalada'}], measurements:[{name:'Vibração global',unit:'mm/s',before:'10,2',after:'2,0',limit:'≤ 4,5'}], photos:{before:[svgPhoto('Antes','#3a5878')],during:[svgPhoto('Balanceamento','#775625')],after:[svgPhoto('Finalizado','#18745a')]}, report:{approved:true,sent:true,scheduledAt:'',sentAt:'2026-07-25T16:30',recipient:'manutencao@usinaverde.com.br'}
-      },
-      {
-        id:'o1229', number:'1229', clientId:'c4', equipmentId:'e4', entryDate:'2026-08-02', dueDate:'2026-08-14', stage:'entrada', defect:'Vazamento de óleo e ruído', technician:'A definir', supervisor:'Carlos Alberto', notes:'', parts:[], measurements:[], photos:{before:[],during:[],after:[]}, report:{approved:false,sent:false,scheduledAt:'',sentAt:'',recipient:'pcm@metalurgicajl.com.br'}
-      }
-    ],
-    activity:[
-      {id:'a1',at:'2026-08-05T14:20',text:'Retentor da OS #1247 marcado como comprado.'},
-      {id:'a2',at:'2026-08-05T10:15',text:'Relatório da OS #1231 enviado ao cliente.'},
-      {id:'a3',at:'2026-08-04T16:40',text:'Nova OS #1229 cadastrada para Metalúrgica JL.'}
-    ]
-  });
+  const seedDB = () => emptyDBV206();
 
   let db = normalizeAfterLoadV5(loadDB());
   saveDB();
@@ -177,22 +138,24 @@
   }
 
   function loadDB() {
+    if(REMOTE_ONLY_V206){clearDeviceBusinessDataV206();return migrateDB(emptyDBV206());}
     try {
       const parsed = migrateDB(JSON.parse(localStorage.getItem(DB_KEY)));
       if (parsed) { localStorage.setItem(DB_KEY, JSON.stringify(parsed)); return parsed; }
     } catch (error) { console.warn('Banco local inválido', error); }
-    const initial = migrateDB(seedDB());
+    const initial = migrateDB(emptyDBV206());
     localStorage.setItem(DB_KEY, JSON.stringify(initial));
     return initial;
   }
   function saveDB() {
+    if(REMOTE_ONLY_V206)return true;
     try {
       localStorage.setItem(DB_KEY, JSON.stringify(db));
       return true;
     } catch (error) {
       console.error('Falha ao salvar banco local', error);
       const message = error?.name === 'QuotaExceededError'
-        ? 'O armazenamento deste dispositivo ficou cheio. Exporte um backup e remova fotos desnecessárias.'
+        ? 'O armazenamento deste dispositivo ficou cheio.'
         : 'Não foi possível salvar os dados neste dispositivo.';
       if (document.getElementById('toast-region')) toast(message,'error');
       return false;
@@ -452,7 +415,7 @@
   }
 
   function settingsView() {
-    return shell(`<div class="page">${pageHead('Configurações','Dados da unidade, backup e recuperação.')}<div class="grid settings-grid-v2022"><section class="card"><div class="card-head"><h2>Dados da oficina</h2></div><div class="card-body form-grid"><div class="form-group span-2"><label for="company-name">Nome</label><input class="input" id="company-name" value="${safe(db.company.name)}" required></div><div class="form-group"><label for="company-unit">Unidade</label><input class="input" id="company-unit" value="${safe(db.company.unit)}"></div><div class="form-group"><label for="company-email">E-mail de relatórios</label><input class="input" type="email" id="company-email" value="${safe(db.company.email)}" required></div><div class="span-2"><button class="btn btn-primary" data-action="save-settings">${icon('save')} Salvar dados</button></div></div></section><section class="card"><div class="card-head"><h2>Backup dos dados</h2></div><div class="card-body stack"><p style="color:var(--muted);font-size:13px">Exporte todos os clientes, equipamentos, OS, peças e relatórios em JSON.</p><button class="btn btn-light" data-action="export-data">${icon('download')} Exportar backup</button><label class="btn btn-light">${icon('file')} Importar backup<input type="file" accept="application/json" id="import-file" hidden></label><div class="settings-danger-note-v2022"><strong>Atenção</strong><span>Esta ação substitui os dados locais atuais pelos dados de demonstração. Use somente para testes.</span></div><button class="btn btn-danger" data-action="reset-data">${icon('trash')} Restaurar dados de demonstração</button></div></section></div></div>`,'settings');
+    return shell(`<div class="page">${pageHead('Configurações','Dados da unidade, backup e recuperação.')}<div class="grid settings-grid-v2022"><section class="card"><div class="card-head"><h2>Dados da oficina</h2></div><div class="card-body form-grid"><div class="form-group span-2"><label for="company-name">Nome</label><input class="input" id="company-name" value="${safe(db.company.name)}" required></div><div class="form-group"><label for="company-unit">Unidade</label><input class="input" id="company-unit" value="${safe(db.company.unit)}"></div><div class="form-group"><label for="company-email">E-mail de relatórios</label><input class="input" type="email" id="company-email" value="${safe(db.company.email)}" required></div><div class="span-2"><button class="btn btn-primary" data-action="save-settings">${icon('save')} Salvar dados</button></div></div></section><section class="card"><div class="card-head"><h2>Backup dos dados</h2></div><div class="card-body stack"><p style="color:var(--muted);font-size:13px">Exporte todos os clientes, equipamentos, OS, peças e relatórios em JSON.</p><button class="btn btn-light" data-action="export-data">${icon('download')} Exportar backup</button><label class="btn btn-light">${icon('file')} Importar backup<input type="file" accept="application/json" id="import-file" hidden></label><div class="settings-danger-note-v2022"><strong>Atenção</strong><span>No ambiente local, esta ação apaga os dados armazenados neste navegador. Em produção, use a limpeza definitiva do banco central.</span></div><button class="btn btn-danger" data-action="reset-data">${icon('trash')} Limpar ambiente local</button></div></section></div></div>`,'settings');
   }
 
   function notFoundView() { return shell(`<div class="page"><div class="empty"><strong>Página não encontrada</strong><a class="btn btn-primary" href="#dashboard">Voltar ao dashboard</a></div></div>`,''); }
@@ -587,7 +550,7 @@
     if(action==='portal-approve'){toast('Orçamento aprovado e oficina notificada.');return;}
     if(action==='save-settings'){const nameEl=document.getElementById('company-name'),unitEl=document.getElementById('company-unit'),emailEl=document.getElementById('company-email');if(!nameEl?.value.trim())return toast('Informe o nome da oficina.','error');if(!emailEl?.value.trim()||!emailEl.checkValidity())return toast('Informe um e-mail válido para os relatórios.','error');db.company.name=nameEl.value.trim();db.company.unit=unitEl?.value.trim()||'';db.company.email=emailEl.value.trim();saveDB();render();toast('Configurações salvas.');return;}
     if(action==='export-data'){exportData();return;}
-    if(action==='reset-data'){if(confirm('ATENÇÃO: esta ação substitui os dados locais atuais pelos dados de demonstração. Deseja realmente continuar?')){db=seedDB();saveDB();render();toast('Dados de demonstração restaurados.');}return;}
+    if(action==='reset-data'){if(REMOTE_ONLY_V206){toast('Use a opção Limpar dados definitivamente nas Configurações.','error');return;}if(confirm('Esta ação limpa os dados deste ambiente local. Deseja continuar?')){db=emptyDBV206();saveDB();render();toast('Ambiente local limpo.');}return;}
   }
 
   function submitNewOrder(){
@@ -1135,7 +1098,7 @@
       if(action==='portal-approve'){toast('Orçamento aprovado e oficina notificada.');return;}
       if(action==='save-settings'){const nameEl=document.getElementById('company-name'),unitEl=document.getElementById('company-unit'),emailEl=document.getElementById('company-email');if(!nameEl?.value.trim())return toast('Informe o nome da oficina.','error');if(!emailEl?.value.trim()||!emailEl.checkValidity())return toast('Informe um e-mail válido para os relatórios.','error');db.company.name=nameEl.value.trim();db.company.unit=unitEl?.value.trim()||'';db.company.email=emailEl.value.trim();saveDB();render();toast('Configurações salvas.');return;}
       if(action==='export-data'){exportData();return;}
-      if(action==='reset-data'){if(confirm('ATENÇÃO: esta ação substitui os dados locais atuais pelos dados de demonstração. Deseja realmente continuar?')){db=normalizeAfterLoadV5(seedDB());saveDB();render();toast('Dados de demonstração restaurados.');}return;}
+      if(action==='reset-data'){if(REMOTE_ONLY_V206){toast('Use a opção Limpar dados definitivamente nas Configurações.','error');return;}if(confirm('Esta ação limpa os dados deste ambiente local. Deseja continuar?')){db=normalizeAfterLoadV5(emptyDBV206());saveDB();render();toast('Ambiente local limpo.');}return;}
     } catch(error){console.error(error);toast(`Erro: ${error.message}`,'error');}
   }
 
@@ -1173,13 +1136,14 @@
   }
 
   function saveDB() {
+    if(REMOTE_ONLY_V206){clearDeviceBusinessDataV206();return true;}
     try {
       localStorage.setItem(DB_KEY,JSON.stringify(db));
       syncChannelV7?.postMessage({type:'db-update',source:tabIdV7,at:Date.now()});
       return true;
     } catch(error) {
       console.error('Falha ao salvar banco local',error);
-      const message=error?.name==='QuotaExceededError'?'O armazenamento deste dispositivo ficou cheio. Exporte um backup e remova fotos desnecessárias.':'Não foi possível salvar os dados neste dispositivo.';
+      const message=error?.name==='QuotaExceededError'?'O armazenamento deste dispositivo ficou cheio.':'Não foi possível salvar os dados neste dispositivo.';
       if(document.getElementById('toast-region'))toast(message,'error');
       return false;
     }
@@ -3266,7 +3230,7 @@
 
   function toast(message,type='success'){const region=document.getElementById('toast-region');if(!region)return;while(region.children.length>=3)region.firstElementChild?.remove();const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=message;region.appendChild(el);setTimeout(()=>el.remove(),2600);}
 
-  function reloadFromSharedStorageV7(){try{const incoming=normalizeAfterLoadV5(JSON.parse(localStorage.getItem(DB_KEY)));if(incoming){db=incoming;render();}}catch(error){console.warn('Não foi possível sincronizar a atualização',error);}}
+  function reloadFromSharedStorageV7(){if(REMOTE_ONLY_V206)return;try{const incoming=normalizeAfterLoadV5(JSON.parse(localStorage.getItem(DB_KEY)));if(incoming){db=incoming;render();}}catch(error){console.warn('Não foi possível sincronizar a atualização',error);}}
   syncChannelV7?.addEventListener('message',event=>{if(event.data?.type==='db-update'&&event.data.source!==tabIdV7)reloadFromSharedStorageV7();});
   window.addEventListener('storage',event=>{if(event.key===DB_KEY)reloadFromSharedStorageV7();});
   document.addEventListener('click',handleV7SupplementalClick);
@@ -3293,8 +3257,9 @@
   const REMOTE_SYNC_INTERVAL_V20=5000;
   const REMOTE_REVISION_KEY_V2022='ar7-remote-revision-v2022';
   const REMOTE_PENDING_KEY_V2022='ar7-remote-pending-v2022';
-  let remoteRevisionV20=Number(localStorage.getItem(REMOTE_REVISION_KEY_V2022)||0)||0;
-  let remoteDirtyV20=localStorage.getItem(REMOTE_PENDING_KEY_V2022)==='1';
+  let remoteRevisionV20=REMOTE_ONLY_V206?0:(Number(localStorage.getItem(REMOTE_REVISION_KEY_V2022)||0)||0);
+  let remoteDirtyV20=REMOTE_ONLY_V206?false:localStorage.getItem(REMOTE_PENDING_KEY_V2022)==='1';
+  let remoteEpochV206='';
   let remoteSaveInFlightV20=false;
   let remoteSaveTimerV20=null;
   let remotePollTimerV20=null;
@@ -3311,7 +3276,7 @@
     const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local',conflict:'Conflito de edição — toque para recarregar'};
     badge.className=`sync-badge-v20 ${state}`;
     badge.textContent=message||labels[state]||state;
-    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.5 — sincronização entre dispositivos';
+    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.6 — banco central sem persistência no dispositivo';
     badge.dataset.conflict=state==='conflict'?'1':'0';
   }
 
@@ -3350,30 +3315,43 @@
 
   function markRemotePendingV2022(){
     remoteDirtyV20=true;
+    if(REMOTE_ONLY_V206)return;
     try{localStorage.setItem(REMOTE_PENDING_KEY_V2022,'1');localStorage.setItem(REMOTE_REVISION_KEY_V2022,String(remoteRevisionV20||0));}catch{}
   }
   function clearRemotePendingV2022(){
     remoteDirtyV20=false;
+    if(REMOTE_ONLY_V206){clearDeviceBusinessDataV206();return;}
     try{localStorage.removeItem(REMOTE_PENDING_KEY_V2022);localStorage.setItem(REMOTE_REVISION_KEY_V2022,String(remoteRevisionV20||0));}catch{}
   }
 
   async function pushRemoteStateV20(){
-    if(remoteSaveInFlightV20||!remoteAuthenticatedV20)return false;
+    if(remoteSaveInFlightV20||!remoteAuthenticatedV20||!remoteEpochV206)return false;
     remoteSaveInFlightV20=true;remoteStatusV20('saving');
     try{
-      const response=await fetchV20('/api/state',{method:'PUT',body:JSON.stringify({data:db,clientVersion:APP_RELEASE,expectedRevision:remoteRevisionV20})});
+      const response=await fetchV20('/api/state',{method:'PUT',body:JSON.stringify({data:db,clientVersion:APP_RELEASE,expectedRevision:remoteRevisionV20,expectedEpoch:remoteEpochV206})});
       if(response.status===401){remoteAuthenticatedV20=false;await ensureRemoteAuthV20();remoteSaveInFlightV20=false;return pushRemoteStateV20();}
       const payload=await response.json().catch(()=>({}));
+      if(response.status===426&&payload.updateRequired){
+        remoteDirtyV20=false;remoteStatusV20('conflict','Versão antiga — recarregue a página');
+        toast('A versão deste navegador ficou antiga. Recarregue a página antes de continuar.','error');
+        return false;
+      }
+      if(response.status===409&&payload.resetRequired){
+        remoteDirtyV20=false;remoteConflictV2022=false;remoteEpochV206=String(payload.dataEpoch||'');clearDeviceBusinessDataV206();
+        remoteStatusV20('syncing','Banco reinicializado — recarregando dados centrais');
+        await pullRemoteStateV20(true);
+        toast('O banco foi limpo. Dados antigos deste dispositivo foram descartados.');
+        return false;
+      }
       if(response.status===409&&payload.conflict){
         remoteConflictV2022=true;markRemotePendingV2022();
-        try{localStorage.setItem('ar7-sync-conflict-backup-v2022',JSON.stringify({savedAt:new Date().toISOString(),expectedRevision:remoteRevisionV20,currentRevision:Number(payload.currentRevision||0),data:db}));}catch{}
         remoteStatusV20('conflict','Outro dispositivo salvou antes — toque aqui para recarregar');
-        toast('Conflito de sincronização detectado. Seus dados locais foram preservados; recarregue o banco antes de continuar.','error');
+        toast('Conflito de sincronização detectado. As alterações permanecem apenas nesta sessão até você recarregar o banco central.','error');
         return false;
       }
       if(!response.ok)throw new Error(payload.error||`HTTP ${response.status}`);
-      remoteRevisionV20=Number(payload.revision||remoteRevisionV20||0);clearRemotePendingV2022();remoteConflictV2022=false;remoteStatusV20('online');return true;
-    }catch(error){console.warn('Falha ao sincronizar com banco central',error);markRemotePendingV2022();remoteStatusV20('offline','Alteração salva neste dispositivo; banco aguardando conexão');return false;}
+      remoteRevisionV20=Number(payload.revision||remoteRevisionV20||0);remoteEpochV206=String(payload.dataEpoch||remoteEpochV206);clearRemotePendingV2022();remoteConflictV2022=false;remoteStatusV20('online');return true;
+    }catch(error){console.warn('Falha ao sincronizar com banco central',error);markRemotePendingV2022();remoteStatusV20('offline','Alteração pendente nesta sessão; nada foi gravado no dispositivo');return false;}
     finally{remoteSaveInFlightV20=false;}
   }
 
@@ -3385,48 +3363,40 @@
   }
 
   saveDB=function(){
-    const localOk=saveDBLocalV20();
+    const localOk=REMOTE_ONLY_V206?true:saveDBLocalV20();
     if(remoteInitialSyncDoneV20)scheduleRemoteSaveV20();
-    else markRemotePendingV2022();
+    else if(!REMOTE_ONLY_V206)markRemotePendingV2022();
     return localOk||remoteAuthenticatedV20;
   };
 
   async function pullRemoteStateV20(initial=false){
     if(!remoteAuthenticatedV20||remoteSaveInFlightV20||(!initial&&remoteDirtyV20))return false;
-    if(initial&&remoteDirtyV20){
-      const pushed=await pushRemoteStateV20();
-      if(!pushed)return false;
-    }
     if(initial)remoteStatusV20('syncing');
     try{
       const response=await fetchV20('/api/state');
       if(response.status===401){remoteAuthenticatedV20=false;if(await ensureRemoteAuthV20())return pullRemoteStateV20(initial);return false;}
-      if(response.status===404){
-        remoteInitialSyncDoneV20=true;
-        const uploaded=await pushRemoteStateV20();
-        if(uploaded)toast('Banco central criado com os dados deste dispositivo.');
-        return uploaded;
-      }
       const payload=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(payload.error||`HTTP ${response.status}`);
-      const incoming=normalizeAfterLoadV5(payload.data);
+      const incoming=normalizeAfterLoadV5(payload.data||emptyDBV206());
       const incomingRevision=Number(payload.revision||0);
+      remoteEpochV206=String(payload.dataEpoch||remoteEpochV206||'');
       if(incoming&&(initial||incomingRevision>remoteRevisionV20)){
         db=incoming;db.version=APP_VERSION;
-        try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(error){console.warn('Cache local cheio; dados continuam disponíveis pelo banco central.',error);}
         remoteRevisionV20=incomingRevision;
-        try{localStorage.setItem(REMOTE_REVISION_KEY_V2022,String(remoteRevisionV20||0));}catch{}
+        if(!REMOTE_ONLY_V206){
+          try{localStorage.setItem(DB_KEY,JSON.stringify(db));localStorage.setItem(REMOTE_REVISION_KEY_V2022,String(remoteRevisionV20||0));}catch(error){console.warn('Cache local indisponível.',error);}
+        }else clearDeviceBusinessDataV206();
         if(remoteInitialSyncDoneV20||initial)render();
       }
       remoteInitialSyncDoneV20=true;clearRemotePendingV2022();remoteStatusV20('online');return true;
-    }catch(error){console.warn('Banco central indisponível',error);remoteInitialSyncDoneV20=true;remoteStatusV20('offline');return false;}
+    }catch(error){console.warn('Banco central indisponível',error);remoteInitialSyncDoneV20=true;remoteStatusV20('offline','Banco central indisponível; dados não serão gravados no dispositivo');return false;}
   }
 
   async function initRemoteSyncV20(){
     remoteStatusV20('syncing');
     const authenticated=await ensureRemoteAuthV20();
     if(!authenticated){remoteInitialSyncDoneV20=true;return;}
-    const hadPending=localStorage.getItem(REMOTE_PENDING_KEY_V2022)==='1';
+    const hadPending=!REMOTE_ONLY_V206&&localStorage.getItem(REMOTE_PENDING_KEY_V2022)==='1';
     if(hadPending){
       remoteInitialSyncDoneV20=true;
       const pushed=await pushRemoteStateV20();
@@ -3449,7 +3419,7 @@
   document.addEventListener('click',async event=>{
     const badge=event.target.closest?.('#ar7-sync-badge-v20');
     if(!badge||badge.dataset.conflict!=='1')return;
-    const proceed=confirm('Outro dispositivo salvou alterações antes deste. Uma cópia de segurança local foi preservada. Recarregar agora com os dados mais recentes do banco central?');
+    const proceed=confirm('Outro dispositivo salvou alterações antes deste. Recarregar agora com os dados mais recentes do banco central? Alterações ainda não sincronizadas desta sessão serão descartadas.');
     if(!proceed)return;
     remoteConflictV2022=false;remoteDirtyV20=false;
     await pullRemoteStateV20(true);
@@ -4166,6 +4136,127 @@
       renderedRouteKeyV7=routeKey;
     }
   };
+
+
+  /* =========================
+     AR7 V20.2.6 — dados centrais, anexos sem persistência no dispositivo e limpeza definitiva
+     ========================= */
+  let cameraStreamV206=null;
+  let cameraTargetV206=null;
+
+  async function uploadMediaV206(photo){
+    if(!REMOTE_ONLY_V206||!photo?.src?.startsWith('data:image/'))return photo;
+    if(!remoteAuthenticatedV20&&!(await ensureRemoteAuthV20()))throw new Error('Faça login antes de anexar a imagem.');
+    const response=await fetchV20('/api/media',{method:'POST',body:JSON.stringify({dataUrl:photo.src})});
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(payload.error||'Não foi possível armazenar o anexo no banco central.');
+    return {...photo,src:payload.url,mediaId:payload.id,stored:'central',compressedBytes:Number(payload.size||photo.compressedBytes||0)};
+  }
+
+  const fileToPhotoBeforeV206=fileToPhoto;
+  fileToPhoto=async function(file,caption=''){
+    const transient=await fileToPhotoBeforeV206(file,caption);
+    return uploadMediaV206(transient);
+  };
+
+  async function clearBrowserCachesV206(){
+    clearDeviceBusinessDataV206();
+    try{
+      if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(key=>caches.delete(key)));}
+      if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(reg=>reg.unregister()));}
+    }catch{}
+  }
+
+  function settingsViewV206(){
+    const storageText=REMOTE_ONLY_V206
+      ? 'Neste ambiente hospedado, clientes, OS, fotos e anexos ficam somente no banco central. O navegador não mantém uma cópia persistente do banco da oficina.'
+      : 'No modo local de desenvolvimento, os dados podem permanecer neste computador. Em produção hospedada, o modo central é ativado automaticamente.';
+    return shell(`<div class="page">${pageHead('Configurações','Dados da unidade, armazenamento central e segurança dos dados.')}<div class="grid settings-grid-v2022"><section class="card"><div class="card-head"><h2>Dados da oficina</h2></div><div class="card-body form-grid"><div class="form-group span-2"><label for="company-name">Nome</label><input class="input" id="company-name" value="${safe(db.company?.name||'AR7 Elétrica')}" required></div><div class="form-group"><label for="company-unit">Unidade</label><input class="input" id="company-unit" value="${safe(db.company?.unit||'Matriz')}"></div><div class="form-group"><label for="company-email">E-mail de relatórios</label><input class="input" type="email" id="company-email" value="${safe(db.company?.email||'')}" required></div><div class="span-2"><button class="btn btn-primary" data-action="save-settings">${icon('save')} Salvar dados</button></div></div></section><section class="card"><div class="card-head"><h2>Armazenamento central</h2></div><div class="card-body stack"><div class="storage-policy-v206"><div class="storage-policy-icon-v206">${icon('check',22)}</div><div><strong>Sem banco persistente no dispositivo</strong><p>${safe(storageText)}</p></div></div><div class="storage-rule-v206"><strong>Fotos e anexos</strong><span>São compactados temporariamente na memória e enviados ao PostgreSQL. Depois, o sistema guarda apenas a referência do arquivo.</span></div><div class="storage-rule-v206"><strong>Câmera direta</strong><span>Usa captura do navegador e não solicita que o AR7 grave uma cópia na galeria. Arquivos escolhidos da Galeria continuam sendo arquivos que já existiam no aparelho; o navegador não tem permissão para apagá-los.</span></div><div class="storage-rule-v206"><strong>Cache</strong><span>O AR7 usa respostas sem cache para os anexos e limpa os caches próprios do navegador sempre que possível.</span></div></div></section><section class="card settings-danger-card-v206"><div class="card-head"><h2>Limpeza definitiva</h2></div><div class="card-body stack"><p class="settings-danger-copy-v206">Apaga clientes, equipamentos, ordens de serviço, histórico operacional, lixeira e todos os anexos armazenados no banco central. Dispositivos antigos ficam impedidos de reenviar dados anteriores.</p><button class="btn btn-danger" data-action="open-purge-v206">${icon('trash')} Limpar dados definitivamente</button></div></section></div></div>`,'settings');
+  }
+  settingsView=settingsViewV206;
+
+  function openPurgeModalV206(){
+    openModal('Limpeza definitiva do sistema',`<div class="purge-confirm-v206"><div class="purge-warning-v206">${icon('alert',24)}<div><strong>Esta ação não pode ser desfeita.</strong><p>Clientes, equipamentos, OS, histórico, lixeira, fotos e anexos serão eliminados do banco central.</p></div></div><div class="form-group"><label>Para confirmar, digite <strong>LIMPAR AR7</strong></label><input class="input" id="purge-confirm-text-v206" autocomplete="off" placeholder="LIMPAR AR7"></div><label class="purge-check-v206"><input type="checkbox" id="purge-confirm-check-v206"> <span>Entendo que os dados operacionais e anexos serão apagados definitivamente.</span></label></div>`,`<button class="btn btn-light" data-action="close-modal">Cancelar</button><button class="btn btn-danger" data-action="execute-purge-v206">${icon('trash')} Apagar definitivamente</button>`);
+  }
+
+  async function executePurgeV206(){
+    const text=document.getElementById('purge-confirm-text-v206')?.value?.trim();
+    const checked=document.getElementById('purge-confirm-check-v206')?.checked;
+    if(text!=='LIMPAR AR7'||!checked){toast('Digite LIMPAR AR7 e marque a confirmação para continuar.','error');return;}
+    const button=document.querySelector('[data-action="execute-purge-v206"]');if(button){button.disabled=true;button.textContent='Limpando banco central...';}
+    try{
+      const response=await fetchV20('/api/admin/purge',{method:'POST',body:JSON.stringify({confirm:'LIMPAR AR7'})});
+      const payload=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(payload.error||'Não foi possível limpar os dados.');
+      db=normalizeAfterLoadV5(payload.data||emptyDBV206());
+      remoteRevisionV20=Number(payload.revision||0);remoteEpochV206=String(payload.dataEpoch||'');remoteDirtyV20=false;remoteConflictV2022=false;
+      newOrderDraft=null;arrowEditorState=null;
+      await clearBrowserCachesV206();
+      closeModal();location.hash='#dashboard';render({resetScroll:true});remoteStatusV20('online');
+      toast(`Limpeza concluída. ${Number(payload.mediaDeleted||0)} anexo(s) removido(s) do banco central.`);
+    }catch(error){console.error(error);toast(error.message||'Falha na limpeza definitiva.','error');if(button){button.disabled=false;button.innerHTML=`${icon('trash')} Apagar definitivamente`;}}
+  }
+
+  function stopCameraV206(){
+    try{cameraStreamV206?.getTracks?.().forEach(track=>track.stop());}catch{}
+    cameraStreamV206=null;cameraTargetV206=null;
+  }
+
+  async function openCameraV206(input){
+    if(!REMOTE_ONLY_V206){input.removeAttribute('capture');input.click();input.setAttribute('capture','environment');return;}
+    if(!navigator.mediaDevices?.getUserMedia){toast('Câmera direta indisponível neste navegador. Use Galeria; o AR7 não cria uma cópia local do arquivo selecionado.','error');return;}
+    stopCameraV206();
+    cameraTargetV206={action:input.dataset.action,orderId:input.dataset.order||'',group:input.dataset.group||''};
+    try{
+      cameraStreamV206=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+      openModal('Capturar foto',`<div class="camera-capture-v206"><video id="camera-video-v206" autoplay playsinline muted></video><p>A imagem fica apenas na memória durante a captura e é enviada diretamente ao banco central.</p></div>`,`<button class="btn btn-light" data-action="cancel-camera-v206">Cancelar</button><button class="btn btn-primary" data-action="capture-camera-v206">${icon('camera')} Capturar e enviar</button>`);
+      const video=document.getElementById('camera-video-v206');if(video){video.srcObject=cameraStreamV206;await video.play().catch(()=>{});}
+    }catch(error){stopCameraV206();toast('Não foi possível acessar a câmera. Verifique a permissão do navegador ou use Galeria.','error');}
+  }
+
+  async function captureCameraV206(){
+    const video=document.getElementById('camera-video-v206');
+    if(!video||!cameraTargetV206){toast('A câmera não está pronta.','error');return;}
+    const button=document.querySelector('[data-action="capture-camera-v206"]');if(button){button.disabled=true;button.textContent='Enviando...';}
+    try{
+      const vw=video.videoWidth||1280,vh=video.videoHeight||720,scale=Math.min(1,1600/Math.max(vw,vh));
+      const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(vw*scale));canvas.height=Math.max(1,Math.round(vh*scale));
+      const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(video,0,0,canvas.width,canvas.height);
+      const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('Falha ao capturar a imagem.')),'image/jpeg',0.82));
+      const target={...cameraTargetV206};
+      const caption=target.action==='wizard-photo-upload'?'Recebimento':({before:'Recebimento',during:'Diagnóstico',assembly:'Montagem',after:'Finalização'})[target.group]||'';
+      const photo=await fileToPhoto(blob,caption);
+      if(target.action==='wizard-photo-upload'){
+        if(!newOrderDraft)throw new Error('O cadastro da OS não está mais aberto.');
+        newOrderDraft.receptionPhotos=newOrderDraft.receptionPhotos||[];newOrderDraft.receptionPhotos.push(photo);
+        stopCameraV206();closeModal();newOrderModal(2);toast('Foto enviada diretamente ao banco central.');
+      }else{
+        const order=getOrder(target.orderId);if(!order)throw new Error('OS não encontrada.');
+        saveStageData(order,false);order.photos[target.group]=order.photos[target.group]||[];order.photos[target.group].push(photo);
+        stopCameraV206();closeModal();saveDB();render();toast('Foto enviada diretamente ao banco central.');
+      }
+    }catch(error){console.error(error);toast(error.message||'Não foi possível capturar a foto.','error');if(button){button.disabled=false;button.innerHTML=`${icon('camera')} Capturar e enviar`;}}
+  }
+
+  document.addEventListener('click',event=>{
+    const label=event.target.closest?.('label');
+    const captureInput=event.target.matches?.('input[type="file"][capture]')?event.target:label?.querySelector?.('input[type="file"][capture]');
+    if(!captureInput)return;
+    event.preventDefault();event.stopImmediatePropagation();openCameraV206(captureInput);
+  },true);
+
+  document.addEventListener('click',async event=>{
+    const target=event.target.closest?.('[data-action]');if(!target)return;
+    const action=target.dataset.action;
+    if(action==='open-purge-v206'){event.preventDefault();openPurgeModalV206();return;}
+    if(action==='execute-purge-v206'){event.preventDefault();await executePurgeV206();return;}
+    if(action==='cancel-camera-v206'){event.preventDefault();stopCameraV206();closeModal();return;}
+    if(action==='capture-camera-v206'){event.preventDefault();await captureCameraV206();return;}
+  });
+
+  window.addEventListener('pagehide',()=>{stopCameraV206();clearDeviceBusinessDataV206();});
+  window.addEventListener('beforeunload',()=>clearDeviceBusinessDataV206());
+  clearBrowserCachesV206();
 
   render();
   initRemoteSyncV20();

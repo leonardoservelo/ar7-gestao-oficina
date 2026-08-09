@@ -1,0 +1,42 @@
+'use strict';
+const fs=require('fs');
+const path=require('path');
+const root=path.resolve(__dirname,'..');
+const read=f=>fs.readFileSync(path.join(root,f),'utf8');
+const app=read('app.js'),server=read('server.js'),css=read('styles.css'),index=read('index.html'),pkg=JSON.parse(read('package.json'));
+let passed=0,total=0;
+function check(name,ok){total++;console.log(`${ok?'PASS':'FAIL'} - ${name}`);if(ok)passed++;else process.exitCode=1;}
+
+check('release V20.2.6 consistente',pkg.version==='20.2.6'&&app.includes("const APP_RELEASE = '20.2.6'")&&server.includes("version:'20.2.6'")&&index.includes('app.js?v=20.2.6'));
+check('base inicial nao contem registros de demonstracao',app.includes('const seedDB = () => emptyDBV206();')&&!app.includes("id:'c1'")&&!app.includes("id:'o1247'"));
+check('base vazia preserva somente configuracao e catalogo',app.includes('clients:[],equipment:[],orders:[],activity:[],deletedOrders:[]'));
+check('modo hospedado e remote only',app.includes("const REMOTE_ONLY_V206 = location.protocol === 'https:'")&&app.includes("!['localhost','127.0.0.1'].includes(location.hostname)"));
+check('load inicial hospedado descarta cache local',app.includes('if(REMOTE_ONLY_V206){clearDeviceBusinessDataV206();return migrateDB(emptyDBV206());}'));
+check('save local hospedado e bloqueado',app.includes('if(REMOTE_ONLY_V206){clearDeviceBusinessDataV206();return true;}'));
+check('chaves antigas de banco e conflito sao removidas',app.includes('DEVICE_DATA_KEYS_V206')&&app.includes("'ar7-sync-conflict-backup-v2022'")&&app.includes("localStorage.removeItem(key)"));
+check('estado recebido do servidor nao e copiado para localStorage em producao',app.includes("if(!REMOTE_ONLY_V206){\n          try{localStorage.setItem(DB_KEY,JSON.stringify(db))")&&app.includes('}else clearDeviceBusinessDataV206();'));
+check('offline nao promete persistencia no aparelho',app.includes('Alteração pendente nesta sessão; nada foi gravado no dispositivo'));
+check('anexos possuem tabela binaria central',server.includes('CREATE TABLE IF NOT EXISTS ar7_media')&&server.includes('data bytea NOT NULL')&&server.includes('size_bytes integer NOT NULL'));
+check('upload de anexo exige autenticacao',server.includes("url.pathname==='/api/media'&&req.method==='POST'")&&server.includes('const session=requireAuth(req,res)'));
+check('upload aceita somente imagens conhecidas e limita tamanho',server.includes('image\\/(?:jpeg|png|webp)')&&server.includes('MAX_MEDIA_BYTES = 2 * 1024 * 1024'));
+check('frontend troca data URL por referencia central',app.includes('uploadMediaV206')&&app.includes("src:payload.url,mediaId:payload.id,stored:'central'"));
+check('midia e servida sem cache persistente',server.includes("'Cache-Control':'no-store, no-cache, must-revalidate, private, max-age=0'")&&server.includes("'Pragma':'no-cache'"));
+check('service worker e caches sao limpos',app.includes('clearBrowserCachesV206')&&app.includes('caches.delete(key)')&&app.includes('reg.unregister()'));
+check('captura direta usa getUserMedia',app.includes('navigator.mediaDevices?.getUserMedia')&&app.includes("facingMode:{ideal:'environment'}"));
+check('captura direta explica memoria temporaria',app.includes('A imagem fica apenas na memória durante a captura e é enviada diretamente ao banco central.'));
+check('galeria informa limitacao de seguranca do navegador',app.includes('o navegador não tem permissão para apagá-los'));
+check('limpeza definitiva possui endpoint autenticado',server.includes("url.pathname==='/api/admin/purge'&&req.method==='POST'")&&server.includes("String(body.confirm||'')!=='LIMPAR AR7'"));
+check('limpeza apaga midias e historico operacional',server.includes('DELETE FROM ar7_media')&&server.includes('DELETE FROM ar7_audit_log')&&server.includes("'data-purge'"));
+check('limpeza preserva configuracao da oficina',server.includes('emptyStateV206(currentState.rows[0]?.data||{})')&&server.includes('company:{...defaults,...(base.company||{})}'));
+check('epoch muda depois da limpeza',server.includes("meta_key='data_epoch'")&&server.includes('const epoch=crypto.randomUUID()')&&server.includes('resetRequired:true'));
+check('clientes antigos nao podem ressuscitar dados',server.includes("const MIN_WRITE_RELEASE = '20.2.6'")&&server.includes('releaseAtLeast(body.clientVersion,MIN_WRITE_RELEASE)')&&server.includes('updateRequired:true'));
+check('writes exigem epoch atual',server.includes('expectedEpoch')&&server.includes('String(body.expectedEpoch)!==currentEpoch'));
+check('midias sem referencia sao apagadas ao salvar estado',server.includes('purgeUnreferencedMedia(client,body.data)')&&server.includes('collectMediaIds'));
+check('configuracoes exibem politica de armazenamento central',app.includes('Sem banco persistente no dispositivo')&&app.includes('Armazenamento central')&&css.includes('.storage-policy-v206'));
+check('limpeza exige frase e checkbox na interface',app.includes('purge-confirm-text-v206')&&app.includes('purge-confirm-check-v206')&&app.includes("text!=='LIMPAR AR7'||!checked"));
+check('pagina descarregada elimina dados persistentes proprios',app.includes("window.addEventListener('pagehide'")&&app.includes("window.addEventListener('beforeunload'"));
+check('pacote nao restaura mais dados de demonstracao',!app.includes('Restaurar dados de demonstração')&&!app.includes('Dados de demonstração restaurados'));
+check('teste de privacidade faz parte do test all',pkg.scripts?.['test:privacy']==='node tests/privacy-storage-audit-v206.js'&&String(pkg.scripts?.['test:all']).includes('npm run test:privacy'));
+
+console.log(`\n${passed}/${total} verificações V20.2.6 de privacidade/armazenamento aprovadas.`);
+if(passed!==total)process.exit(1);
