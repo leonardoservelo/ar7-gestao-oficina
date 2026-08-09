@@ -1,4 +1,4 @@
-# AR7 Gestão da Oficina V20.2.4
+# AR7 Gestão da Oficina V20.2.5
 
 Versão multi-dispositivo com banco central PostgreSQL.
 
@@ -197,3 +197,13 @@ Além da auditoria geral, a versão inclui:
 - A primeira página concentra contexto, diagnóstico, escopo, plano de execução e síntese comercial.
 - A segunda concentra materiais, composição do investimento, condições, premissas e aceite.
 - Crédito da Nexora Sistemas permanece discreto, sem competir com a marca AR7 Elétrica.
+
+
+## V20.2.5 — hotfix de navegação e codificação
+
+- Relatórios abre corretamente mesmo com banco sem OS, exibindo estado vazio e atalhos seguros.
+- Portal do Cliente abre corretamente sem clientes cadastrados, orientando o cadastro sem travar a navegação.
+- Topo direito mostra apenas `Nexora Sistemas · v20.2.5`.
+- Camada preventiva corrige textos persistidos com mojibake comum de UTF-8/Windows-1252 sem alterar imagens.
+- Fallback de erro mantém navegação segura de volta ao Dashboard e às Ordens de Serviço.
+- Auditoria de estados vazios cobre todas as áreas principais.

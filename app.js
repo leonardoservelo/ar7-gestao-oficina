@@ -3,7 +3,7 @@
 
   const DB_KEY = 'ar7-oficina-db-v2';
   const APP_VERSION = 20.2;
-  const APP_RELEASE = '20.2.4';
+  const APP_RELEASE = '20.2.5';
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -3311,7 +3311,7 @@
     const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local',conflict:'Conflito de edição — toque para recarregar'};
     badge.className=`sync-badge-v20 ${state}`;
     badge.textContent=message||labels[state]||state;
-    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.4 — sincronização entre dispositivos';
+    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.5 — sincronização entre dispositivos';
     badge.dataset.conflict=state==='conflict'?'1':'0';
   }
 
@@ -4019,8 +4019,153 @@
   const portalProposalViewBeforeV204=portalProposalViewV18;
   portalProposalViewV18=function(deliveryId){return portalProposalViewBeforeV204(deliveryId).replace(/>3 páginas</g,'>2 páginas<');};
 
-  const renderBeforeV202=render;
-  render=function(options={}){renderBeforeV202(options);requestAnimationFrame(enhanceMobileUXV202);};
+
+  /* ==============================================================
+     AR7 V20.2.5 — hotfix de navegação, estados vazios e codificação
+     ============================================================== */
+  const CP1252_BYTES_V205={
+    '€':0x80,'‚':0x82,'ƒ':0x83,'„':0x84,'…':0x85,'†':0x86,'‡':0x87,'ˆ':0x88,'‰':0x89,'Š':0x8A,'‹':0x8B,'Œ':0x8C,'Ž':0x8E,
+    '‘':0x91,'’':0x92,'“':0x93,'”':0x94,'•':0x95,'–':0x96,'—':0x97,'˜':0x98,'™':0x99,'š':0x9A,'›':0x9B,'œ':0x9C,'ž':0x9E,'Ÿ':0x9F
+  };
+  const MOJIBAKE_PATTERN_V205=/(?:Ã[\u0080-\u00BF]|Â[\u0080-\u00BF]|â[€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]|ðŸ|ï»¿|�)/g;
+  function mojibakeScoreV205(value){const matches=String(value??'').match(MOJIBAKE_PATTERN_V205);return matches?matches.length:0;}
+  function repairTextEncodingV205(value){
+    const text=String(value??'');
+    if(!text||text.startsWith('data:')||mojibakeScoreV205(text)===0)return text;
+    try{
+      const bytes=[];
+      for(const char of text){
+        const code=char.charCodeAt(0);
+        if(code<=255){bytes.push(code);continue;}
+        const mapped=CP1252_BYTES_V205[char];
+        if(mapped===undefined)throw new Error('caractere fora de CP1252');
+        bytes.push(mapped);
+      }
+      if(typeof TextDecoder!=='undefined'){
+        const decoded=new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(bytes));
+        if(mojibakeScoreV205(decoded)<mojibakeScoreV205(text))return decoded;
+      }
+    }catch{}
+    return text
+      .replace(/Ã¡/g,'á').replace(/Ã¢/g,'â').replace(/Ã£/g,'ã').replace(/Ã¤/g,'ä')
+      .replace(/Ã©/g,'é').replace(/Ãª/g,'ê').replace(/Ã­/g,'í')
+      .replace(/Ã³/g,'ó').replace(/Ã´/g,'ô').replace(/Ãµ/g,'õ').replace(/Ã¶/g,'ö')
+      .replace(/Ãº/g,'ú').replace(/Ã¼/g,'ü').replace(/Ã§/g,'ç')
+      .replace(/Ã/g,'Á').replace(/Ã‚/g,'Â').replace(/Ãƒ/g,'Ã').replace(/Ã‰/g,'É').replace(/ÃŠ/g,'Ê')
+      .replace(/Ã“/g,'Ó').replace(/Ã”/g,'Ô').replace(/Ã•/g,'Õ').replace(/Ãš/g,'Ú').replace(/Ã‡/g,'Ç')
+      .replace(/Â·/g,'·').replace(/Âº/g,'º').replace(/Âª/g,'ª').replace(/Â /g,' ')
+      .replace(/â€“/g,'–').replace(/â€”/g,'—').replace(/â€¢/g,'•').replace(/â†’/g,'→')
+      .replace(/â€œ/g,'“').replace(/â€/g,'”').replace(/â€˜/g,'‘').replace(/â€™/g,'’')
+      .replace(/ï»¿/g,'');
+  }
+  function repairStateTextV205(value,seen=new WeakSet()){
+    if(typeof value==='string')return repairTextEncodingV205(value);
+    if(!value||typeof value!=='object'||seen.has(value))return value;
+    seen.add(value);
+    if(Array.isArray(value)){
+      for(let index=0;index<value.length;index++)value[index]=repairStateTextV205(value[index],seen);
+      return value;
+    }
+    for(const key of Object.keys(value)){
+      const current=value[key];
+      if(key==='src'&&typeof current==='string'&&current.startsWith('data:'))continue;
+      value[key]=repairStateTextV205(current,seen);
+    }
+    return value;
+  }
+
+  const normalizeAfterLoadBeforeV205=normalizeAfterLoadV5;
+  normalizeAfterLoadV5=function(parsed){return repairStateTextV205(normalizeAfterLoadBeforeV205(parsed));};
+  db=repairStateTextV205(db);
+
+  const safeBeforeV205=safe;
+  safe=function(value=''){return safeBeforeV205(repairTextEncodingV205(value));};
+  const equipmentDescriptionBeforeV205=equipmentDescription;
+  equipmentDescription=function(eq){return repairTextEncodingV205(equipmentDescriptionBeforeV205(eq));};
+
+  function emptyActionPageV205(title,subtitle,heading,message,actions,route=''){
+    return shell(`<div class="page empty-state-page-v205">${pageHead(title,subtitle)}<section class="card empty-state-card-v205"><div class="empty-state-icon-v205">${icon('file',28)}</div><h2>${safe(heading)}</h2><p>${safe(message)}</p><div class="empty-state-actions-v205">${actions}</div></section></div>`,route);
+  }
+
+  const reportsViewBeforeV205=reportsView;
+  reportsView=function(orderId){
+    const order=getOrder(orderId)||db.orders.find(item=>item.stage==='relatorio')||db.orders.find(item=>item.stage==='concluida')||db.orders[0];
+    if(!order){
+      return emptyActionPageV205(
+        'Relatórios técnicos',
+        'Gere, revise e acompanhe os documentos técnicos das ordens de serviço.',
+        'Nenhum relatório disponível',
+        'Ainda não existem ordens de serviço com dados para gerar relatório. Assim que uma OS avançar no fluxo, ela aparecerá aqui.',
+        `<a class="btn btn-primary" href="#orders">Abrir ordens de serviço</a><a class="btn btn-light" href="#dashboard">Voltar ao dashboard</a>`,
+        'reports'
+      );
+    }
+    return reportsViewBeforeV205(order.id);
+  };
+
+  function portalEmptyViewV205(){
+    return shell(`<div class="page empty-state-page-v205">${pageHead('Portal do Cliente','Área de acompanhamento destinada às empresas cadastradas.')}<section class="card empty-state-card-v205 portal-empty-v205"><div class="empty-state-icon-v205">${icon('globe',30)}</div><h2>Nenhum cliente disponível para o portal</h2><p>Cadastre primeiro a empresa cliente. Depois o portal será liberado automaticamente com equipamentos, ordens, propostas, aprovações, fotos e relatórios vinculados a ela.</p><div class="empty-state-actions-v205"><a class="btn btn-primary" href="#clients">Cadastrar cliente</a><a class="btn btn-light" href="#dashboard">Voltar ao dashboard</a></div></section></div>`,'portal');
+  }
+
+  const portalDashboardBeforeV205=portalDashboardV13;
+  portalDashboardV13=function(client){return client?portalDashboardBeforeV205(client):portalEmptyViewV205();};
+  const portalEquipmentBeforeV205=portalEquipmentViewV13;
+  portalEquipmentViewV13=function(clientId){return (db.clients||[]).length?portalEquipmentBeforeV205(clientId):portalEmptyViewV205();};
+  const portalOrdersBeforeV205=portalOrdersViewV13;
+  portalOrdersViewV13=function(clientId){return (db.clients||[]).length?portalOrdersBeforeV205(clientId):portalEmptyViewV205();};
+  const portalReportsBeforeV205=portalReportsViewV13;
+  portalReportsViewV13=function(clientId){return (db.clients||[]).length?portalReportsBeforeV205(clientId):portalEmptyViewV205();};
+  const portalProposalsBeforeV205=portalProposalsViewV18;
+  portalProposalsViewV18=function(clientId){return (db.clients||[]).length?portalProposalsBeforeV205(clientId):portalEmptyViewV205();};
+  const portalApprovalsBeforeV205=portalApprovalsViewV13;
+  portalApprovalsViewV13=function(clientId){return (db.clients||[]).length?portalApprovalsBeforeV205(clientId):portalEmptyViewV205();};
+  const portalHistoryBeforeV205=portalHistoryViewV13;
+  portalHistoryViewV13=function(clientId){return (db.clients||[]).length?portalHistoryBeforeV205(clientId):portalEmptyViewV205();};
+  const portalPhotosBeforeV205=portalPhotosViewV13;
+  portalPhotosViewV13=function(clientId){return (db.clients||[]).length?portalPhotosBeforeV205(clientId):portalEmptyViewV205();};
+  const portalProposalDetailBeforeV205=portalProposalViewV18;
+  portalProposalViewV18=function(deliveryId){return (db.clients||[]).length?portalProposalDetailBeforeV205(deliveryId):portalEmptyViewV205();};
+  const portalReportDetailBeforeV205=portalReportViewV8;
+  portalReportViewV8=function(orderId){return (db.clients||[]).length?portalReportDetailBeforeV205(orderId):portalEmptyViewV205();};
+
+  const shellBeforeV205=shell;
+  shell=function(content,route,portal=false,portalClientId=''){
+    let html=shellBeforeV205(content,route,portal,portalClientId);
+    if(!portal){
+      const developer=`${safe(SOFTWARE_STUDIO_V203.name)} <small>v${APP_RELEASE}</small>`;
+      html=html.replace(/<div class="workspace"[^>]*>[\s\S]*?<\/div>/,`<div class="workspace developer-workspace-v205" role="status" aria-label="Desenvolvedor e versão">${developer}</div>`);
+      html=html.replace(/<button(?: type="button")? class="workspace"[^>]*>[\s\S]*?<\/button>/,`<div class="workspace developer-workspace-v205" role="status" aria-label="Desenvolvedor e versão">${developer}</div>`);
+    }
+    return html;
+  };
+
+  render=function(options={}){
+    ensureDeletedOrdersV14();
+    const {route,param}=parseRoute(),routeKey=`${route}/${param||''}`;
+    const resetScroll=options?.resetScroll===true||Boolean(renderedRouteKeyV7&&renderedRouteKeyV7!==routeKey);
+    const state=resetScroll?null:captureUIStateV7();
+    const views={
+      dashboard:dashboardView,orders:()=>ordersView(param),'trash-orders':trashOrdersViewV14,
+      clients:clientsView,client:()=>clientDetailView(param),equipment:equipmentView,parts:()=>partsView(param),
+      budgets:budgetsViewV11,proposal:()=>proposalViewV11(param),workshop:workshopView,reports:()=>reportsView(param),
+      portal:()=>portalDashboardV13(portalClientV13(param)),'portal-equipment':()=>portalEquipmentViewV13(param),
+      'portal-orders':()=>portalOrdersViewV13(param),'portal-reports':()=>portalReportsViewV13(param),
+      'portal-proposals':()=>portalProposalsViewV18(param),'portal-proposal':()=>portalProposalViewV18(param),
+      'portal-approvals':()=>portalApprovalsViewV13(param),'portal-history':()=>portalHistoryViewV13(param),
+      'portal-photos':()=>portalPhotosViewV13(param),'portal-report':()=>portalReportViewV8(param),settings:settingsView,order:()=>orderDetailView(param)
+    };
+    try{
+      const view=views[route]||notFoundView;
+      document.getElementById('app').innerHTML=view();
+      renderedRouteKeyV7=routeKey;
+      requestAnimationFrame(()=>{enhancePageV12();enhanceMobileUXV202();if(resetScroll)window.scrollTo(0,0);else restoreUIStateV7(state);});
+    }catch(error){
+      console.error('Falha ao renderizar',error);
+      const message=repairTextEncodingV205(error?.message||'Erro inesperado ao abrir esta área.');
+      document.getElementById('app').innerHTML=shell(`<div class="page empty-state-page-v205"><section class="card empty-state-card-v205 error-recovery-v205"><div class="empty-state-icon-v205">${icon('alert',30)}</div><h2>Não foi possível abrir esta tela</h2><p>${safe(message)}</p><div class="empty-state-actions-v205"><a class="btn btn-primary" href="#dashboard">Voltar ao dashboard</a><a class="btn btn-light" href="#orders">Abrir ordens de serviço</a></div></section></div>`,'');
+      renderedRouteKeyV7=routeKey;
+    }
+  };
 
   render();
   initRemoteSyncV20();
