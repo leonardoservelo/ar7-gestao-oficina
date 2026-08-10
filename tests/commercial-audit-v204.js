@@ -7,7 +7,7 @@ const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const app=read('app.js'),css=read('styles.css'),index=read('index.html'),pkg=JSON.parse(read('package.json'));
 const checks=[];
 function check(name,ok){checks.push({name,ok:Boolean(ok)});console.log(`${ok?'PASS':'FAIL'} - ${name}`);if(!ok)process.exitCode=1;}
-check('release V20.2.4 consistente',app.includes("const APP_RELEASE = '20.2.6'")&&pkg.version==='20.2.6'&&index.includes('app.js?v=20.2.6')&&index.includes('styles.css?v=20.2.6'));
+check('release V20.2.4 consistente',app.includes("const APP_RELEASE = '20.2.7'")&&pkg.version==='20.2.7'&&index.includes('app.js?v=20.2.7')&&index.includes('styles.css?v=20.2.7'));
 check('negativa e detectada pelo feedback mais recente',app.includes("item.feedback?.type!=='rejected'")&&app.includes('latestBudgetFeedbackV17(order)'));
 check('alerta permanece ate haver reenvio posterior a negativa',app.includes('sentAt<=rejectedAt')&&app.includes('!sentAt'));
 check('dashboard mostra alerta comercial destacado',app.includes('rejected-proposal-alert-v204')&&app.includes('ATENÇÃO COMERCIAL')&&css.includes('.rejected-proposal-alert-v204'));

@@ -1,4 +1,4 @@
-# AR7 Gestão da Oficina V20.2.6
+# AR7 Gestão da Oficina V20.2.7
 
 Versão multi-dispositivo com banco central PostgreSQL.
 
@@ -143,7 +143,7 @@ A passagem entre etapas respeita os requisitos de prontidão. Ações pendentes 
 
 ## Notas para produção
 
-A V20.2.6 mantém o estado operacional central em PostgreSQL e passa a armazenar fotos/anexos em uma tabela binária separada (`ar7_media`), deixando no estado apenas referências. Em produção hospedada, o navegador não mantém uma cópia persistente do banco operacional.
+A V20.2.7 mantém o estado operacional central em PostgreSQL e passa a armazenar fotos/anexos em uma tabela binária separada (`ar7_media`), deixando no estado apenas referências. Em produção hospedada, o navegador não mantém uma cópia persistente do banco operacional.
 
 Para evolução em escala, ainda vale planejar **contas e permissões individuais por usuário** e, quando o volume de mídia crescer, avaliar object storage dedicado. Para o piloto atual, a mídia centralizada no PostgreSQL reduz a exposição em dispositivos e simplifica a implantação.
 
@@ -217,4 +217,12 @@ Além da auditoria geral, a versão inclui:
 - A limpeza troca o `data_epoch` do banco. Clientes antigos ou abas ainda abertas não conseguem restaurar os dados apagados.
 - Versões anteriores à 20.2.6 são recusadas para novas gravações no estado central.
 - Mídias sem referência são removidas automaticamente quando o estado é salvo.
-- O script `LIMPAR-PRODUCAO-APOS-DEPLOY.ps1` executa a limpeza somente depois de confirmar que a V20.2.6 está online e conectada ao PostgreSQL.
+- O script `LIMPAR-PRODUCAO-APOS-DEPLOY.ps1` executa a limpeza somente depois de confirmar que a V20.2.7 está online e conectada ao PostgreSQL.
+
+
+## V20.2.7 — retornos comerciais no Dashboard
+
+- Propostas negadas continuam aparecendo como alerta vermelho até a nova revisão ser reenviada.
+- Pedidos de revisão/ajuste feitos pelo cliente agora aparecem também no Dashboard, em alerta âmbar.
+- Cada pedido mostra OS, empresa/equipamento, proposta anterior, motivo, data/hora e atalho direto para revisar o orçamento.
+- O alerta de revisão só desaparece depois que uma proposta posterior ao pedido é efetivamente reenviada.

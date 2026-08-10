@@ -1,8 +1,8 @@
 {
   "name": "ar7-gestao-oficina",
-  "version": "20.2.6",
+  "version": "20.2.7",
   "private": true,
-  "description": "AR7 Gestão da Oficina V20.2.6 — limpeza definitiva, banco central sem persistência no dispositivo e anexos armazenados no PostgreSQL.",
+  "description": "AR7 Gestão da Oficina V20.2.7 — dados centrais e privacidade, com pedidos de revisão do cliente destacados no Dashboard.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,11 +10,12 @@
     "check": "node --check app.js && node --check server.js",
     "test": "node tests/smoke-v20.js",
     "test:ui": "node tests/ui-audit-v20.js",
-    "test:all": "npm test && npm run test:ui && npm run test:docs && npm run test:commercial && npm run test:hotfix && npm run test:privacy",
+    "test:all": "npm test && npm run test:ui && npm run test:docs && npm run test:commercial && npm run test:hotfix && npm run test:privacy && npm run test:followup",
     "test:docs": "node tests/document-audit-v203.js",
     "test:commercial": "node tests/commercial-audit-v204.js",
     "test:hotfix": "node tests/hotfix-audit-v205.js",
-    "test:privacy": "node tests/privacy-storage-audit-v206.js"
+    "test:privacy": "node tests/privacy-storage-audit-v206.js",
+    "test:followup": "node tests/commercial-followup-audit-v207.js"
   },
   "engines": {
     "node": ">=18"

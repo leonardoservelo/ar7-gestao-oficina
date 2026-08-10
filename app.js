@@ -3,7 +3,7 @@
 
   const DB_KEY = 'ar7-oficina-db-v2';
   const APP_VERSION = 20.2;
-  const APP_RELEASE = '20.2.6';
+  const APP_RELEASE = '20.2.7';
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -3276,7 +3276,7 @@
     const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local',conflict:'Conflito de edição — toque para recarregar'};
     badge.className=`sync-badge-v20 ${state}`;
     badge.textContent=message||labels[state]||state;
-    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.6 — banco central sem persistência no dispositivo';
+    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.7 — banco central sem persistência no dispositivo';
     badge.dataset.conflict=state==='conflict'?'1':'0';
   }
 
@@ -3939,6 +3939,48 @@
     const rejected=rejectedProposalQueueV204();
     if(!rejected.length)return html;
     const alert=rejectedProposalAlertV204(rejected);
+    return html.replace('<section class="executive-kpis-v19">',`${alert}<section class="executive-kpis-v19">`);
+  };
+
+  /* ==============================================================
+     AR7 V20.2.7 — pedido de revisão também vira pendência no Dashboard
+     ============================================================== */
+  function adjustmentProposalQueueV207(){
+    return (db.orders||[]).map(order=>{
+      const feedback=latestBudgetFeedbackV17(order);
+      const budget=ensureBudgetV11(order);
+      return {order,feedback,budget};
+    }).filter(item=>{
+      if(item.feedback?.type!=='adjustment'||item.order.stage==='concluida')return false;
+      const sentAt=item.budget?.sentAt?new Date(item.budget.sentAt).getTime():0;
+      const requestedAt=item.feedback?.at?new Date(item.feedback.at).getTime():0;
+      return !sentAt||!Number.isFinite(sentAt)||sentAt<=requestedAt;
+    }).sort((a,b)=>String(b.feedback?.at||'').localeCompare(String(a.feedback?.at||'')));
+  }
+
+  function adjustmentProposalAlertV207(items){
+    if(!items.length)return '';
+    const cards=items.slice(0,4).map(item=>{
+      const client=getClient(item.order.clientId),eq=getEquipment(item.order.equipmentId);
+      return `<a class="rejected-proposal-card-v204 adjustment-proposal-card-v207" href="#order/${item.order.id}">
+        <div class="rejected-proposal-card-head-v204 adjustment-proposal-card-head-v207"><span>${icon('edit',16)} Revisão solicitada</span><strong>OS #${safe(item.order.number)}</strong></div>
+        <h3>${safe(client?.name||'Cliente')} · ${safe(eq?.tag||equipmentDescription(eq))}</h3>
+        <p>${safe(item.feedback?.reason||'O cliente solicitou revisão da proposta.')}</p>
+        <div><small>${safe(item.feedback?.proposalCode||'Proposta anterior')} · ${formatDateTime(item.feedback?.at)}</small><b>Revisar orçamento ${icon('arrow',13)}</b></div>
+      </a>`;
+    }).join('');
+    return `<section class="rejected-proposal-alert-v204 adjustment-proposal-alert-v207" aria-label="Pedidos de revisão que exigem ação">
+      <div class="rejected-proposal-alert-summary-v204 adjustment-proposal-alert-summary-v207"><span class="rejected-proposal-eyebrow-v204 adjustment-proposal-eyebrow-v207">REVISÃO SOLICITADA</span><div><strong>${items.length}</strong><h2>${items.length===1?'pedido de revisão':'pedidos de revisão'}</h2></div><p>O cliente pediu alterações na proposta. Abra a OS para ver o motivo, ajustar o orçamento, passar pela revisão interna e reenviar a nova proposta.</p></div>
+      <div class="rejected-proposal-list-v204">${cards}${items.length>4?`<a class="rejected-proposal-more-v204 adjustment-proposal-more-v207" href="#budgets">Ver mais ${items.length-4} no Comercial ${icon('arrow',14)}</a>`:''}</div>
+    </section>`;
+  }
+
+  const dashboardViewBeforeV207=dashboardView;
+  dashboardView=function(){
+    let html=dashboardViewBeforeV207();
+    const adjustments=adjustmentProposalQueueV207();
+    if(!adjustments.length)return html;
+    const alert=adjustmentProposalAlertV207(adjustments);
     return html.replace('<section class="executive-kpis-v19">',`${alert}<section class="executive-kpis-v19">`);
   };
 

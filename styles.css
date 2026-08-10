@@ -2418,3 +2418,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .camera-capture-v206 video{display:block;width:100%;max-height:65vh;object-fit:cover;background:#111;border-radius:14px}
 .camera-capture-v206 p{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
 @media(max-width:720px){.camera-capture-v206 video{max-height:55vh}.storage-policy-v206{padding:12px}}
+
+
+/* AR7 V20.2.7 — pedido de revisão no Dashboard */
+.adjustment-proposal-alert-v207{
+  background:linear-gradient(135deg,#fffaf0 0%,#fff7e5 100%);
+  border-color:#ead7a7;
+  box-shadow:0 10px 24px rgba(164,112,18,.07);
+}
+.adjustment-proposal-eyebrow-v207,
+.adjustment-proposal-alert-summary-v207>div>strong{color:#9a6812}
+.adjustment-proposal-card-v207{border-color:#eadfca}
+.adjustment-proposal-card-v207:hover{border-color:#d5b66f;box-shadow:0 8px 18px rgba(154,104,18,.09)}
+.adjustment-proposal-card-head-v207>span{color:#95620d}
+.adjustment-proposal-card-v207 b,.adjustment-proposal-more-v207{color:#8a5b0c}

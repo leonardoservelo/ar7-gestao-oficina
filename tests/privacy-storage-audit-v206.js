@@ -7,7 +7,7 @@ const app=read('app.js'),server=read('server.js'),css=read('styles.css'),index=r
 let passed=0,total=0;
 function check(name,ok){total++;console.log(`${ok?'PASS':'FAIL'} - ${name}`);if(ok)passed++;else process.exitCode=1;}
 
-check('release V20.2.6 consistente',pkg.version==='20.2.6'&&app.includes("const APP_RELEASE = '20.2.6'")&&server.includes("version:'20.2.6'")&&index.includes('app.js?v=20.2.6'));
+check('release V20.2.7 consistente',pkg.version==='20.2.7'&&app.includes("const APP_RELEASE = '20.2.7'")&&server.includes("version:'20.2.7'")&&index.includes('app.js?v=20.2.7'));
 check('base inicial nao contem registros de demonstracao',app.includes('const seedDB = () => emptyDBV206();')&&!app.includes("id:'c1'")&&!app.includes("id:'o1247'"));
 check('base vazia preserva somente configuracao e catalogo',app.includes('clients:[],equipment:[],orders:[],activity:[],deletedOrders:[]'));
 check('modo hospedado e remote only',app.includes("const REMOTE_ONLY_V206 = location.protocol === 'https:'")&&app.includes("!['localhost','127.0.0.1'].includes(location.hostname)"));
@@ -38,5 +38,5 @@ check('pagina descarregada elimina dados persistentes proprios',app.includes("wi
 check('pacote nao restaura mais dados de demonstracao',!app.includes('Restaurar dados de demonstração')&&!app.includes('Dados de demonstração restaurados'));
 check('teste de privacidade faz parte do test all',pkg.scripts?.['test:privacy']==='node tests/privacy-storage-audit-v206.js'&&String(pkg.scripts?.['test:all']).includes('npm run test:privacy'));
 
-console.log(`\n${passed}/${total} verificações V20.2.6 de privacidade/armazenamento aprovadas.`);
+console.log(`\n${passed}/${total} verificações V20.2.7 de privacidade/armazenamento aprovadas.`);
 if(passed!==total)process.exit(1);

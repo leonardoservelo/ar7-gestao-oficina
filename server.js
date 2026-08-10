@@ -28,7 +28,7 @@ const SESSION_HOURS = Number.parseInt(process.env.AR7_SESSION_HOURS || '12', 10)
 const LOGIN_WINDOW_MS = 15*60*1000;
 const LOGIN_MAX_ATTEMPTS = 8;
 const loginFailures = new Map();
-const APP_RELEASE = '20.2.6';
+const APP_RELEASE = '20.2.7';
 const MIN_WRITE_RELEASE = '20.2.6';
 const MAX_MEDIA_BYTES = 2 * 1024 * 1024;
 
@@ -381,7 +381,7 @@ async function requestHandler(req,res){
   if(url.pathname==='/health'){
     let database=false;
     if(pool){try{await ensureSchema();await pool.query('SELECT 1');database=true;}catch(error){console.error('Health database check',error.message);}}
-    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.6',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
+    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.7',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
   }
   if(url.pathname.startsWith('/api/')){
     try{if(await handleApi(req,res,url))return;}catch(error){console.error('API error',error);json(res,error.statusCode||500,{ok:false,error:'Erro interno da API.'});return;}
@@ -420,7 +420,7 @@ function listenOn(candidate){
     server=candidateServer;
     const url=`http://localhost:${candidate}/#dashboard`;
     console.log('==============================================================');
-    console.log(' AR7 Gestao da Oficina V20.2.6 - Banco central sem persistencia local');
+    console.log(' AR7 Gestao da Oficina V20.2.7 - Banco central sem persistencia local');
     console.log(` Servidor: ${host}:${candidate}`);
     console.log(` Acesso local: ${url}`);
     console.log(` Banco central: ${DATABASE_URL?'configurado':'NAO configurado'}`);
