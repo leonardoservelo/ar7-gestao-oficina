@@ -14,12 +14,12 @@ try {
     Write-Host "Banco configurado:      $($health.databaseConfigured)" -ForegroundColor Cyan
     Write-Host "Banco conectado:        $($health.databaseConnected)" -ForegroundColor Cyan
 
-    if ($health.version -ne '20.2.7' -or !$health.databaseConfigured -or !$health.databaseConnected) {
-        throw 'A limpeza so pode ser executada depois que a V20.2.7 estiver online com o banco conectado.'
+    if ($health.version -ne '20.2.8' -or !$health.databaseConfigured -or !$health.databaseConnected) {
+        throw 'A limpeza so pode ser executada depois que a V20.2.8 estiver online com o banco conectado.'
     }
 
     Write-Host ''
-    Write-Host 'A V20.2.7 esta pronta para impedir que dispositivos antigos restaurem dados apagados.' -ForegroundColor Green
+    Write-Host 'A V20.2.8 esta pronta para impedir que dispositivos antigos restaurem dados apagados.' -ForegroundColor Green
     Write-Host ''
 
     $username = Read-Host 'Usuario administrador (ENTER = admin)'

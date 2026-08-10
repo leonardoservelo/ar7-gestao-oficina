@@ -3,7 +3,7 @@
 
   const DB_KEY = 'ar7-oficina-db-v2';
   const APP_VERSION = 20.2;
-  const APP_RELEASE = '20.2.7';
+  const APP_RELEASE = '20.2.8';
   const STAGES = [
     { id: 'entrada', label: 'Recebimento', team: 'Recepção', short: 'Receber e conferir' },
     { id: 'diagnostico', label: 'Diagnóstico', team: 'Oficina', short: 'Desmontar e diagnosticar' },
@@ -3276,7 +3276,7 @@
     const labels={online:'Banco central conectado',saving:'Salvando no banco...',offline:'Sem conexão com o banco',syncing:'Sincronizando...',local:'Modo local',conflict:'Conflito de edição — toque para recarregar'};
     badge.className=`sync-badge-v20 ${state}`;
     badge.textContent=message||labels[state]||state;
-    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.7 — banco central sem persistência no dispositivo';
+    badge.title=state==='conflict'?'Outro dispositivo salvou antes. Toque para recarregar com segurança.':'AR7 V20.2.8 — banco central + integração Omie';
     badge.dataset.conflict=state==='conflict'?'1':'0';
   }
 
@@ -4299,6 +4299,174 @@
   window.addEventListener('pagehide',()=>{stopCameraV206();clearDeviceBusinessDataV206();});
   window.addEventListener('beforeunload',()=>clearDeviceBusinessDataV206());
   clearBrowserCachesV206();
+
+
+  /* =========================
+     AR7 V20.2.8 — Integração Omie Fase 1
+     AR7 permanece como mestre técnico; Omie recebe operação administrativa após aprovação.
+     ========================= */
+  let omieStatusV208=null;
+  let omieOptionsV208={categories:[],accounts:[],stages:[],paymentTerms:[],services:[]};
+  let omieBusyV208=false;
+
+  const settingsViewBeforeV208=settingsView;
+  settingsView=function(){
+    const html=settingsViewBeforeV208();
+    const card=`<section class="card omie-settings-card-v208"><div class="card-head"><div><h2>Integrações</h2><p>Conexão administrativa e financeira com sistemas externos.</p></div><span class="omie-mini-status-v208" id="omie-settings-status-v208">Consultando...</span></div><div class="card-body"><div class="omie-provider-row-v208"><div class="omie-provider-mark-v208">OMIE</div><div class="omie-provider-copy-v208"><strong>Omie ERP</strong><span>Clientes, serviços, OS comercial e status de faturamento.</span></div><button type="button" class="btn btn-primary" data-action="open-omie-settings-v208">Configurar integração</button></div><p class="omie-security-note-v208">As credenciais ficam somente no servidor. App Key e App Secret nunca são exibidos nesta tela.</p></div></section>`;
+    return html.replace('<section class="card settings-danger-card-v206">',card+'<section class="card settings-danger-card-v206">');
+  };
+
+  function omieStatusToneV208(status){
+    const value=String(status||'NOT_CONFIGURED');
+    if(value==='SYNCED')return 'ok';
+    if(value==='ERROR')return 'error';
+    if(value==='PARTIAL')return 'warn';
+    return 'neutral';
+  }
+
+  function omieStatusLabelV208(status){
+    const labels={NOT_CONFIGURED:'Não configurado',PENDING:'Pendente',SYNCING:'Sincronizando',SYNCED:'Conectado',PARTIAL:'Parcial',ERROR:'Erro'};
+    return labels[String(status||'NOT_CONFIGURED')]||String(status||'Não configurado');
+  }
+
+  function omieApprovalLabelV208(data){
+    if(data?.approved)return 'Proposta aprovada';
+    return 'Aguardando aprovação do cliente';
+  }
+
+  function omieOrderCardV208(order){
+    return `<section class="card omie-os-card-v208" data-omie-order-card-v208="${safe(order.id)}"><div class="card-head"><div><h2>Integração Omie</h2><p>Vínculo administrativo da OS. O histórico técnico continua no AR7.</p></div><span class="omie-mini-status-v208 neutral" data-omie-order-status-v208>Consultando...</span></div><div class="card-body"><div class="omie-order-loading-v208" data-omie-order-body-v208><span class="spinner-dot-v208"></span> Carregando status da integração...</div></div></section>`;
+  }
+
+  const orderDetailViewBeforeV208=orderDetailView;
+  orderDetailView=function(orderId){
+    const order=getOrder(orderId);const html=orderDetailViewBeforeV208(orderId);if(!order)return html;
+    return html.replace('<section class="card handoff-card">',omieOrderCardV208(order)+'<section class="card handoff-card">');
+  };
+
+  async function omieFetchV208(url,options={}){
+    const response=await fetchV20(url,options);const payload=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(payload.error||`Falha na integração Omie (HTTP ${response.status}).`);
+    return payload;
+  }
+
+  async function loadOmieStatusV208({silent=false}={}){
+    try{
+      omieStatusV208=await omieFetchV208('/api/integrations/omie/status');
+      const badge=document.getElementById('omie-settings-status-v208');
+      if(badge){badge.className=`omie-mini-status-v208 ${omieStatusToneV208(omieStatusV208.status)}`;badge.textContent=omieStatusLabelV208(omieStatusV208.status);}
+      return omieStatusV208;
+    }catch(error){
+      const badge=document.getElementById('omie-settings-status-v208');if(badge){badge.className='omie-mini-status-v208 error';badge.textContent='Indisponível';}
+      if(!silent)throw error;return null;
+    }
+  }
+
+  function omieToggleV208(id,label,description,checked,disabled=false){
+    return `<label class="omie-toggle-v208 ${disabled?'disabled':''}"><input type="checkbox" id="${id}" ${checked?'checked':''} ${disabled?'disabled':''}><span class="omie-toggle-switch-v208"></span><span><strong>${safe(label)}</strong><small>${safe(description)}</small></span></label>`;
+  }
+
+  function omieSelectV208(id,label,value,items=[],placeholder='Selecione no Omie'){
+    const options=(items||[]).map(item=>`<option value="${safe(item.id)}" ${String(item.id)===String(value||'')?'selected':''}>${safe(item.label||item.code||item.id)}</option>`).join('');
+    return `<div class="form-group"><label for="${id}">${safe(label)}</label><select class="select" id="${id}"><option value="">${safe(placeholder)}</option>${options}</select><input class="input omie-fallback-input-v208" id="${id}-manual" value="${safe(value||'')}" placeholder="Ou informe o código manualmente"></div>`;
+  }
+
+  function renderOmieSettingsModalV208(status){
+    const cfg=status?.settings||{};const envEnabled=Boolean(status?.enabledByEnvironment);const creds=Boolean(status?.credentialsPresent);
+    const stateLabel=omieStatusLabelV208(status?.status);const company=status?.company?.name||'Ainda não identificada';
+    const lastSync=status?.lastSyncAt?formatDateTime(status.lastSyncAt):'Nunca';
+    const body=`<div class="omie-settings-v208">
+      <section class="omie-connection-hero-v208"><div><div class="omie-provider-mark-v208">OMIE</div><div><span class="omie-status-line-v208 ${omieStatusToneV208(status?.status)}"><i></i>${safe(stateLabel)}</span><h3>${safe(company)}</h3><p>Última sincronização: ${safe(lastSync)} · ${Number(status?.syncCount||0)} registro(s) processado(s)</p></div></div><div class="omie-credential-state-v208"><small>Credenciais</small><strong>${creds?'Configuradas no servidor':'Ausentes no servidor'}</strong></div></section>
+      ${!envEnabled?`<div class="omie-warning-v208">${icon('alert',18)} <div><strong>Integração bloqueada pelo ambiente</strong><span>Ative OMIE_INTEGRATION_ENABLED no Render somente quando estiver pronto para comunicar com dados reais.</span></div></div>`:''}
+      ${status?.lastError?`<div class="omie-error-v208"><strong>Último erro</strong><span>${safe(status.lastError)}</span></div>`:''}
+      <div class="omie-config-grid-v208">
+        <section class="omie-config-section-v208"><h4>Automação</h4>${omieToggleV208('omie-enabled-v208','Integração Omie','Chave geral da integração.',Boolean(cfg.enabled))}${omieToggleV208('omie-clients-v208','Sincronizar clientes','Evita duplicidade usando mapping, código de integração e CPF/CNPJ.',Boolean(cfg.syncClients))}${omieToggleV208('omie-services-v208','Sincronizar serviços','Vincula o serviço AR7 a um cadastro de serviço do Omie.',Boolean(cfg.syncServices))}${omieToggleV208('omie-approved-v208','Enviar propostas aprovadas','Somente aprovação real do cliente gera sincronização.',Boolean(cfg.sendApprovedProposals))}${omieToggleV208('omie-orders-v208','Criar/atualizar OS no Omie','Mantém uma única OS Omie por OS AR7.',Boolean(cfg.syncOrders))}${omieToggleV208('omie-billing-v208','Consultar faturamento','Traz o status de faturamento da OS.',Boolean(cfg.queryBilling))}${omieToggleV208('omie-nfse-v208','Consultar NFS-e','Preparado para leitura fiscal; a emissão continua no Omie.',Boolean(cfg.queryNfse))}${omieToggleV208('omie-receivables-v208','Consultar contas a receber','Preparação da fase financeira.',Boolean(cfg.queryReceivables))}${omieToggleV208('omie-payments-v208','Consultar pagamentos','Preparação da fase financeira.',Boolean(cfg.queryPayments))}${omieToggleV208('omie-products-v208','Sincronizar produtos/peças','Fase 2 — não envia peças nesta versão.',Boolean(cfg.syncProducts),true)}</section>
+        <section class="omie-config-section-v208"><h4>Parâmetros da OS Omie</h4><div class="form-group"><label>Modo</label><select class="select" id="omie-mode-v208"><option value="manual" ${cfg.syncMode!=='automatic'?'selected':''}>Manual</option><option value="automatic" ${cfg.syncMode==='automatic'?'selected':''}>Automático após aprovação</option></select></div>${omieSelectV208('omie-category-v208','Categoria',cfg.categoryCode,omieOptionsV208.categories,'Selecione a categoria')}${omieSelectV208('omie-account-v208','Conta corrente',cfg.currentAccountId,omieOptionsV208.accounts,'Selecione a conta')}${omieSelectV208('omie-stage-v208','Etapa de faturamento',cfg.billingStageCode,omieOptionsV208.stages,'Selecione a etapa')}${omieSelectV208('omie-installment-v208','Condição de pagamento',cfg.installmentCode,omieOptionsV208.paymentTerms,'Selecione a condição')}<div class="form-group"><label for="omie-installment-count-v208">Nº de parcelas</label><input class="input" type="number" min="1" max="60" id="omie-installment-count-v208" value="${safe(cfg.installmentCount||1)}"><small>Use a quantidade correspondente à condição selecionada no Omie.</small></div><div class="form-group"><label>Cidade da prestação</label><input class="input" id="omie-city-v208" value="${safe(cfg.serviceCity||'')}" placeholder="Código/nome exigido pelo cadastro Omie"></div></section>
+        <section class="omie-config-section-v208 omie-service-section-v208"><h4>Serviço padrão</h4>${omieSelectV208('omie-service-v208','Serviço Omie',cfg.defaultServiceExternalId,omieOptionsV208.services,'Selecione um serviço cadastrado')}<div class="form-group"><label>Descrição de referência</label><input class="input" id="omie-service-name-v208" value="${safe(cfg.defaultServiceName||'Manutenção eletromecânica conforme proposta AR7')}"></div><div class="form-group"><label>Código de integração</label><input class="input" id="omie-service-code-v208" value="${safe(cfg.defaultServiceIntegrationCode||'AR7-SVC-MANUT')}"></div><details class="omie-advanced-v208"><summary>Cadastro automático de serviço — avançado</summary><p>Por segurança fiscal, mantenha desligado até preencher os códigos tributários fornecidos pela sua contabilidade/Omie.</p>${omieToggleV208('omie-autocreate-service-v208','Permitir criação automática','Usa Upsert somente quando os dados fiscais abaixo estiverem completos.',Boolean(cfg.autoCreateService))}<div class="form-grid"><div class="form-group"><label>ID do imposto</label><input class="input" id="omie-tax-id-v208" value="${safe(cfg.serviceTaxId||'')}"></div><div class="form-group"><label>Código municipal</label><input class="input" id="omie-municipal-v208" value="${safe(cfg.serviceMunicipalCode||'')}"></div><div class="form-group"><label>LC 116</label><input class="input" id="omie-lc116-v208" value="${safe(cfg.serviceLc116Code||'')}"></div><div class="form-group"><label>NBS</label><input class="input" id="omie-nbs-v208" value="${safe(cfg.serviceNbsId||'')}"></div></div></details></section>
+      </div>
+      <section class="omie-webhook-panel-v208"><div><strong>Webhook AR7</strong><span>${safe(status?.webhookEndpoint||'/api/integrations/omie/webhook')}</span></div><span class="omie-webhook-security-v208">${status?.webhookSecured?'Token configurado no servidor':'Token ainda não configurado'}</span><small>O token não é mostrado no navegador. Ao configurar o webhook no Omie, use a URL segura definida no servidor.</small></section>
+    </div>`;
+    const footer=`<button class="btn btn-light" data-action="close-modal">Fechar</button><button type="button" class="btn btn-light" data-action="omie-load-options-v208">Carregar parâmetros Omie</button><button type="button" class="btn btn-light" data-action="omie-logs-v208">Ver logs</button><button type="button" class="btn btn-light" data-action="omie-test-v208">Testar conexão</button><button type="button" class="btn btn-light" data-action="omie-sync-all-v208">Sincronizar agora</button><button type="button" class="btn btn-primary" data-action="omie-save-v208">${icon('save',15)} Salvar</button>`;
+    openModal('Integração Omie',body,footer);
+  }
+
+  async function openOmieSettingsV208(){
+    try{const status=await loadOmieStatusV208();renderOmieSettingsModalV208(status);}catch(error){toast(error.message,'error');}
+  }
+
+  function omieValueV208(selectId){
+    const select=document.getElementById(selectId),manual=document.getElementById(`${selectId}-manual`);
+    return String(select?.value||manual?.value||'').trim();
+  }
+
+  function collectOmieSettingsV208(){
+    const b=id=>Boolean(document.getElementById(id)?.checked);const v=id=>String(document.getElementById(id)?.value||'').trim();
+    return {enabled:b('omie-enabled-v208'),syncMode:v('omie-mode-v208')||'manual',syncClients:b('omie-clients-v208'),syncServices:b('omie-services-v208'),sendApprovedProposals:b('omie-approved-v208'),syncOrders:b('omie-orders-v208'),queryBilling:b('omie-billing-v208'),queryNfse:b('omie-nfse-v208'),queryReceivables:b('omie-receivables-v208'),queryPayments:b('omie-payments-v208'),syncProducts:false,categoryCode:omieValueV208('omie-category-v208'),currentAccountId:omieValueV208('omie-account-v208'),billingStageCode:omieValueV208('omie-stage-v208'),installmentCode:omieValueV208('omie-installment-v208'),installmentCount:Number(v('omie-installment-count-v208')||1),serviceCity:v('omie-city-v208'),defaultServiceExternalId:omieValueV208('omie-service-v208'),defaultServiceName:v('omie-service-name-v208'),defaultServiceIntegrationCode:v('omie-service-code-v208'),autoCreateService:b('omie-autocreate-service-v208'),serviceTaxId:v('omie-tax-id-v208'),serviceMunicipalCode:v('omie-municipal-v208'),serviceLc116Code:v('omie-lc116-v208'),serviceNbsId:v('omie-nbs-v208')};
+  }
+
+  async function saveOmieSettingsV208(){
+    if(omieBusyV208)return;omieBusyV208=true;
+    try{const payload=collectOmieSettingsV208();await omieFetchV208('/api/integrations/omie/settings',{method:'PUT',body:JSON.stringify(payload)});toast('Configuração Omie salva no servidor.');await openOmieSettingsV208();}catch(error){toast(error.message,'error');}finally{omieBusyV208=false;}
+  }
+
+  async function testOmieV208(){
+    if(omieBusyV208)return;omieBusyV208=true;try{toast('Testando conexão com o Omie...');const result=await omieFetchV208('/api/integrations/omie/test',{method:'POST',body:'{}'});toast(`Omie conectado: ${result?.result?.company?.name||'empresa identificada'}.`);await openOmieSettingsV208();}catch(error){toast(error.message,'error');}finally{omieBusyV208=false;}
+  }
+
+  async function loadOmieOptionsV208(){
+    if(omieBusyV208)return;omieBusyV208=true;try{toast('Consultando parâmetros no Omie...');omieOptionsV208=await omieFetchV208('/api/integrations/omie/options');toast('Parâmetros do Omie carregados.');const status=await loadOmieStatusV208();renderOmieSettingsModalV208(status);}catch(error){toast(error.message,'error');}finally{omieBusyV208=false;}
+  }
+
+  async function syncAllOmieV208(){
+    if(omieBusyV208)return;omieBusyV208=true;try{toast('Sincronizando com o Omie...');const result=await omieFetchV208('/api/integrations/omie/sync',{method:'POST',body:'{}'});toast(`Sincronização concluída: ${Number(result.success||0)} sucesso(s), ${Number(result.errors||0)} falha(s).`,result.errors?'error':'success');await openOmieSettingsV208();}catch(error){toast(error.message,'error');}finally{omieBusyV208=false;}
+  }
+
+  async function openOmieLogsV208(){
+    try{const payload=await omieFetchV208('/api/integrations/omie/logs?limit=150');const rows=(payload.logs||[]).map(log=>`<tr><td>${formatDateTime(log.created_at)}</td><td>${safe(log.direction||'')}</td><td>${safe(log.action||'')}</td><td><span class="omie-log-status-v208 ${String(log.status||'').toLowerCase()}">${safe(log.status||'')}</span></td><td>${safe(log.message||'')}</td></tr>`).join('');openModal('Histórico da integração Omie',`<div class="omie-log-table-v208"><table class="table"><thead><tr><th>Data</th><th>Direção</th><th>Ação</th><th>Status</th><th>Mensagem</th></tr></thead><tbody>${rows||'<tr><td colspan="5"><div class="empty">Ainda não há comunicações registradas.</div></td></tr>'}</tbody></table></div>`,`<button class="btn btn-light" data-action="close-modal">Fechar</button>`);}catch(error){toast(error.message,'error');}
+  }
+
+  function renderOmieOrderStatusV208(card,data){
+    const body=card.querySelector('[data-omie-order-body-v208]'),badgeEl=card.querySelector('[data-omie-order-status-v208]');if(!body||!badgeEl)return;
+    const status=data?.order?.status||(!data?.approved?'PENDING':'PENDING');badgeEl.className=`omie-mini-status-v208 ${omieStatusToneV208(status)}`;badgeEl.textContent=data?.order?.synced?'Sincronizado':omieApprovalLabelV208(data);
+    const item=(ok,label,detail='')=>`<div class="omie-check-v208 ${ok?'done':'pending'}"><span>${icon(ok?'check':'clock',15)}</span><div><strong>${safe(label)}</strong>${detail?`<small>${safe(detail)}</small>`:''}</div></div>`;
+    const nfse=data?.order?.nfse||'';const billing=data?.order?.billingStatus||'AGUARDANDO_FATURAMENTO';
+    body.innerHTML=`<div class="omie-order-grid-v208"><div class="omie-checklist-v208">${item(Boolean(data?.customer?.synced),'Cliente sincronizado')}${item(Boolean(data?.service?.synced),'Serviço sincronizado')}${item(Boolean(data?.order?.synced),'OS Omie criada',data?.order?.externalNumber?`OS Omie ${data.order.externalNumber}`:'')}${item(Boolean(data?.approved),'Proposta aprovada/enviada',data?.proposalCode||'')}${item(billing==='FATURADO','Faturamento',billing==='FATURADO'?'Faturado no Omie':'Aguardando faturamento')}${item(Boolean(nfse),'NFS-e',nfse?`NFS-e ${nfse}`:'Ainda não informada')}${item(false,'Pagamento','Consulta financeira completa: Fase 2')}</div><div class="omie-order-summary-v208"><div><small>Código Omie</small><strong>${safe(data?.order?.externalCode||'—')}</strong></div><div><small>ID Omie</small><strong>${safe(data?.order?.externalId||'—')}</strong></div><div><small>Última sincronização</small><strong>${data?.order?.lastSyncedAt?safe(formatDateTime(data.order.lastSyncedAt)):'—'}</strong></div>${data?.order?.lastError?`<div class="omie-order-error-v208"><small>Último erro</small><strong>${safe(data.order.lastError)}</strong></div>`:''}<div class="omie-order-actions-v208"><button type="button" class="btn btn-light btn-sm" data-action="omie-refresh-billing-v208" data-id="${safe(card.dataset.omieOrderCardV208)}" ${data?.order?.synced?'':'disabled'}>Atualizar faturamento</button><button type="button" class="btn btn-primary btn-sm" data-action="omie-sync-order-v208" data-id="${safe(card.dataset.omieOrderCardV208)}" ${data?.approved?'':'disabled'}>${data?.order?.synced?'Sincronizar novamente':'Sincronizar com Omie'}</button></div></div></div>${!data?.approved?'<div class="omie-order-note-v208">Pedido de revisão ou proposta negada não é enviado ao Omie. A sincronização fica disponível apenas após uma aprovação válida do cliente.</div>':''}`;
+  }
+
+  async function refreshOmieOrderCardsV208(){
+    const cards=[...document.querySelectorAll('[data-omie-order-card-v208]')];
+    for(const card of cards){try{const id=card.dataset.omieOrderCardV208;const data=await omieFetchV208(`/api/integrations/omie/order/${encodeURIComponent(id)}`);renderOmieOrderStatusV208(card,data);}catch(error){const body=card.querySelector('[data-omie-order-body-v208]');const badgeEl=card.querySelector('[data-omie-order-status-v208]');if(badgeEl){badgeEl.className='omie-mini-status-v208 error';badgeEl.textContent='Indisponível';}if(body)body.innerHTML=`<div class="omie-order-error-state-v208">${safe(error.message)}</div>`;}}
+  }
+
+  async function syncOmieOrderV208(id){
+    if(omieBusyV208)return;omieBusyV208=true;try{toast('Enviando OS aprovada ao Omie...');await omieFetchV208(`/api/integrations/omie/order/${encodeURIComponent(id)}/sync`,{method:'POST',body:'{}'});toast('OS sincronizada com o Omie.');await refreshOmieOrderCardsV208();}catch(error){toast(error.message,'error');await refreshOmieOrderCardsV208();}finally{omieBusyV208=false;}
+  }
+
+  async function refreshOmieBillingV208(id){
+    if(omieBusyV208)return;omieBusyV208=true;try{await omieFetchV208(`/api/integrations/omie/order/${encodeURIComponent(id)}/billing`,{method:'POST',body:'{}'});toast('Status de faturamento atualizado.');await refreshOmieOrderCardsV208();}catch(error){toast(error.message,'error');}finally{omieBusyV208=false;}
+  }
+
+  async function refreshOmieVisibleV208(){
+    if(document.getElementById('omie-settings-status-v208'))loadOmieStatusV208({silent:true});
+    if(document.querySelector('[data-omie-order-card-v208]'))refreshOmieOrderCardsV208();
+  }
+
+  const renderBeforeV208=render;
+  render=function(options={}){const result=renderBeforeV208(options);setTimeout(()=>refreshOmieVisibleV208(),0);return result;};
+
+  document.addEventListener('click',async event=>{
+    const target=event.target.closest?.('[data-action]');if(!target)return;const action=target.dataset.action;
+    if(!String(action||'').includes('omie-'))return;
+    event.preventDefault();event.stopImmediatePropagation();
+    if(action==='open-omie-settings-v208')return openOmieSettingsV208();
+    if(action==='omie-save-v208')return saveOmieSettingsV208();
+    if(action==='omie-test-v208')return testOmieV208();
+    if(action==='omie-load-options-v208')return loadOmieOptionsV208();
+    if(action==='omie-sync-all-v208')return syncAllOmieV208();
+    if(action==='omie-logs-v208')return openOmieLogsV208();
+    if(action==='omie-sync-order-v208')return syncOmieOrderV208(target.dataset.id);
+    if(action==='omie-refresh-billing-v208')return refreshOmieBillingV208(target.dataset.id);
+  },true);
 
   render();
   initRemoteSyncV20();

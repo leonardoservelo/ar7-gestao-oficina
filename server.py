@@ -23,7 +23,7 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         route=self.path.split('?',1)[0]
         if route == '/health':
-            self._json(200,{'ok':True,'app':'AR7 Gestão da Oficina','version':'20.2.7','databaseConfigured':False,'databaseConnected':False})
+            self._json(200,{'ok':True,'app':'AR7 Gestão da Oficina','version':'20.2.8','databaseConfigured':False,'databaseConnected':False})
             return
         if route == '/api/auth/status':
             self._json(503,{'ok':False,'authenticated':False,'configured':False,'error':'Banco central não configurado neste servidor local de contingência.'})
@@ -69,7 +69,7 @@ def main():
     server=ThreadingHTTPServer((host,port),Handler)
     url=f'http://localhost:{port}/#dashboard'
     print('==============================================================')
-    print(' AR7 Gestao da Oficina V20.2.7')
+    print(' AR7 Gestao da Oficina V20.2.8')
     print(f' Servidor: {host}:{port}')
     print(f' Acesso local: {url}')
     print('==============================================================')

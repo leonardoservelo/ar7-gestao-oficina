@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
+const { createOmieIntegration } = require('./services/omie');
 
 const root = path.resolve(__dirname);
 const argPort = Number.parseInt(process.argv[2] || '', 10);
@@ -28,7 +29,7 @@ const SESSION_HOURS = Number.parseInt(process.env.AR7_SESSION_HOURS || '12', 10)
 const LOGIN_WINDOW_MS = 15*60*1000;
 const LOGIN_MAX_ATTEMPTS = 8;
 const loginFailures = new Map();
-const APP_RELEASE = '20.2.7';
+const APP_RELEASE = '20.2.8';
 const MIN_WRITE_RELEASE = '20.2.6';
 const MAX_MEDIA_BYTES = 2 * 1024 * 1024;
 
@@ -88,6 +89,8 @@ const pool = DATABASE_URL ? new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000
 }) : null;
+const PUBLIC_URL = String(process.env.AR7_PUBLIC_URL || (isHosted ? 'https://ar7-gestao-oficina.onrender.com' : '')).replace(/\/$/,'');
+const omie = pool ? createOmieIntegration({pool,env:process.env,baseUrl:PUBLIC_URL}) : null;
 let schemaReadyPromise = null;
 
 const mimeTypes = {
@@ -206,6 +209,7 @@ async function ensureSchema(){
       )`);
       await pool.query(`INSERT INTO ar7_system_meta(meta_key,meta_value) VALUES('data_epoch',$1)
         ON CONFLICT (meta_key) DO NOTHING`,[crypto.randomUUID()]);
+      if(omie)await omie.ensureSchema();
       return true;
     })().catch(error=>{schemaReadyPromise=null;throw error;});
   }
@@ -234,6 +238,15 @@ async function handleApi(req,res,url){
   }
   if(url.pathname==='/api/auth/logout'&&req.method==='POST'){
     json(res,200,{ok:true},{'Set-Cookie':`ar7_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isHosted?'; Secure':''}`});return true;
+  }
+  if(url.pathname==='/api/integrations/omie/webhook'&&req.method==='POST'){
+    if(!omie){json(res,503,{ok:false,error:'Banco central indisponível.'});return true;}
+    try{
+      await ensureSchema();
+      const result=await omie.receiveWebhook(req,url,readJson);
+      json(res,result.status||200,{ok:Boolean(result.ok),duplicate:Boolean(result.duplicate),eventKey:result.eventKey||undefined,topic:result.topic||undefined,error:result.error||undefined});
+    }catch(error){console.error('POST /api/integrations/omie/webhook',error?.message||error);json(res,error.statusCode||500,{ok:false,error:'Webhook Omie inválido ou temporariamente indisponível.'});}
+    return true;
   }
   if(url.pathname==='/api/media'&&req.method==='POST'){
     const session=requireAuth(req,res);if(!session)return true;
@@ -280,6 +293,52 @@ async function handleApi(req,res,url){
     }catch(error){console.error('DELETE /api/media',error);json(res,503,{ok:false,error:'Não foi possível excluir o anexo.'});}
     return true;
   }
+  if(url.pathname.startsWith('/api/integrations/omie/')&&url.pathname!=='/api/integrations/omie/webhook'){
+    const session=requireAuth(req,res);if(!session)return true;
+    if(!omie){json(res,503,{ok:false,error:'Banco central indisponível.'});return true;}
+    try{
+      await ensureSchema();
+      if(url.pathname==='/api/integrations/omie/status'&&req.method==='GET'){
+        json(res,200,{ok:true,...await omie.publicStatus()});return true;
+      }
+      if(url.pathname==='/api/integrations/omie/settings'&&req.method==='PUT'){
+        const body=await readJson(req,256*1024);const saved=await omie.saveSettings(body);
+        await omie.repo.log({entityType:'settings',direction:'AR7_TO_OMIE',action:'UPDATE_SETTINGS',status:'SUCCESS',message:`Configuração Omie atualizada por ${session.u}.`,requestSummary:{enabled:Boolean(saved.settings?.enabled),syncMode:saved.settings?.syncMode||'manual'}});
+        json(res,200,{ok:true,settings:saved.settings,status:(await omie.publicStatus()).status});return true;
+      }
+      if(url.pathname==='/api/integrations/omie/test'&&req.method==='POST'){
+        json(res,200,{ok:true,result:await omie.sync.testConnection(),integration:await omie.publicStatus()});return true;
+      }
+      if(url.pathname==='/api/integrations/omie/sync'&&req.method==='POST'){
+        const result=await omie.sync.syncAll();json(res,result.ok?200:207,{ok:result.ok,...result});return true;
+      }
+      if(url.pathname==='/api/integrations/omie/logs'&&req.method==='GET'){
+        json(res,200,{ok:true,logs:await omie.repo.logs(url.searchParams.get('limit')||100)});return true;
+      }
+      if(url.pathname==='/api/integrations/omie/options'&&req.method==='GET'){
+        json(res,200,{ok:true,...await omie.sync.options()});return true;
+      }
+      const orderMatch=url.pathname.match(/^\/api\/integrations\/omie\/order\/([^/]+)$/);
+      const orderSyncMatch=url.pathname.match(/^\/api\/integrations\/omie\/order\/([^/]+)\/sync$/);
+      const orderBillingMatch=url.pathname.match(/^\/api\/integrations\/omie\/order\/([^/]+)\/billing$/);
+      if(orderMatch&&req.method==='GET'){
+        const localId=decodeURIComponent(orderMatch[1]);const result=await omie.sync.orderStatus(localId);
+        if(!result){json(res,404,{ok:false,error:'OS não encontrada.'});return true;}
+        json(res,200,{ok:true,...result});return true;
+      }
+      if(orderSyncMatch&&req.method==='POST'){
+        const localId=decodeURIComponent(orderSyncMatch[1]);json(res,200,{ok:true,mapping:await omie.sync.syncOrder(localId),status:await omie.sync.orderStatus(localId)});return true;
+      }
+      if(orderBillingMatch&&req.method==='POST'){
+        const localId=decodeURIComponent(orderBillingMatch[1]);json(res,200,{ok:true,mapping:await omie.sync.refreshOrderBilling(localId),status:await omie.sync.orderStatus(localId)});return true;
+      }
+    }catch(error){
+      console.error(`Omie API ${req.method} ${url.pathname}`,error?.message||error);
+      const status=Number(error?.statusCode)||500;
+      const safe=status>=500&&status!==503&&status!==504?'Falha na comunicação com o Omie.':String(error?.message||'Falha na integração Omie.').slice(0,500);
+      json(res,status,{ok:false,error:safe,code:error?.omieCode||undefined});return true;
+    }
+  }
   if(url.pathname==='/api/admin/purge'&&req.method==='POST'){
     const session=requireAuth(req,res);if(!session)return true;
     let client=null;
@@ -298,6 +357,9 @@ async function handleApi(req,res,url){
         RETURNING revision,updated_at`,[JSON.stringify(clean)]);
       await client.query(`DELETE FROM ar7_media`);
       await client.query(`DELETE FROM ar7_audit_log`);
+      await client.query(`DELETE FROM ar7_integration_webhook_events WHERE organization_id=$1 AND provider='omie'`,[omie?.cfg?.organizationId||'ar7-main']);
+      await client.query(`DELETE FROM ar7_integration_logs WHERE organization_id=$1 AND provider='omie'`,[omie?.cfg?.organizationId||'ar7-main']);
+      await client.query(`DELETE FROM ar7_integration_mappings WHERE organization_id=$1 AND provider='omie'`,[omie?.cfg?.organizationId||'ar7-main']);
       await client.query(`UPDATE ar7_system_meta SET meta_value=$1,updated_at=now() WHERE meta_key='data_epoch'`,[epoch]);
       await client.query(`INSERT INTO ar7_audit_log(actor,action,revision) VALUES($1,$2,$3)`,[session.u,'data-purge',Number(stateResult.rows[0].revision)]);
       await client.query('COMMIT');
@@ -339,7 +401,8 @@ async function handleApi(req,res,url){
         await client.query('ROLLBACK');
         json(res,409,{ok:false,resetRequired:true,dataEpoch:currentEpoch,error:'Os dados centrais foram reinicializados. Recarregue o sistema; dados antigos deste dispositivo não serão reenviados.'});return true;
       }
-      const current=await client.query(`SELECT revision FROM ar7_app_state WHERE state_key='main' FOR UPDATE`);
+      const current=await client.query(`SELECT revision,data FROM ar7_app_state WHERE state_key='main' FOR UPDATE`);
+      const previousData=current.rows[0]?.data||emptyStateV206();
       let row;
       if(!current.rows.length){
         if(expectedRevision!==0){
@@ -360,6 +423,7 @@ async function handleApi(req,res,url){
       await purgeUnreferencedMedia(client,body.data);
       await client.query(`INSERT INTO ar7_audit_log(actor,action,revision) VALUES($1,$2,$3)`,[session.u,'state-save',Number(row.revision)]);
       await client.query('COMMIT');
+      if(omie)setImmediate(()=>omie.sync.onStateSaved(previousData,body.data).catch(error=>console.error('Omie post-save hook',error?.message||error)));
       json(res,200,{ok:true,revision:Number(row.revision),updatedAt:row.updated_at,dataEpoch:currentEpoch});
     }catch(error){
       if(client){try{await client.query('ROLLBACK');}catch{}}
@@ -381,7 +445,7 @@ async function requestHandler(req,res){
   if(url.pathname==='/health'){
     let database=false;
     if(pool){try{await ensureSchema();await pool.query('SELECT 1');database=true;}catch(error){console.error('Health database check',error.message);}}
-    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:'20.2.7',databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
+    json(res,database||!isHosted?200:503,{ok:true,app:'AR7 Gestão da Oficina',version:APP_RELEASE,databaseConfigured:Boolean(pool),databaseConnected:database,timestamp:new Date().toISOString()});return;
   }
   if(url.pathname.startsWith('/api/')){
     try{if(await handleApi(req,res,url))return;}catch(error){console.error('API error',error);json(res,error.statusCode||500,{ok:false,error:'Erro interno da API.'});return;}
@@ -420,7 +484,7 @@ function listenOn(candidate){
     server=candidateServer;
     const url=`http://localhost:${candidate}/#dashboard`;
     console.log('==============================================================');
-    console.log(' AR7 Gestao da Oficina V20.2.7 - Banco central sem persistencia local');
+    console.log(' AR7 Gestao da Oficina V20.2.8 - Banco central + Integracao Omie');
     console.log(` Servidor: ${host}:${candidate}`);
     console.log(` Acesso local: ${url}`);
     console.log(` Banco central: ${DATABASE_URL?'configurado':'NAO configurado'}`);

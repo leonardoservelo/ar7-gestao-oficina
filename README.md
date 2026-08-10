@@ -1,4 +1,4 @@
-# AR7 Gestão da Oficina V20.2.7
+# AR7 Gestão da Oficina V20.2.8
 
 Versão multi-dispositivo com banco central PostgreSQL.
 
@@ -7,7 +7,7 @@ Versão multi-dispositivo com banco central PostgreSQL.
 - Dados centrais compartilhados entre PC, tablet e celular.
 - Login do servidor por cookie HttpOnly.
 - Sincronização automática a cada 5 segundos e após cada salvamento.
-- Cache local mantido para tolerar quedas temporárias de conexão.
+- Em produção, os dados operacionais permanecem somente no servidor; o navegador não mantém cópia persistente do banco da oficina.
 - API `/api/state` protegida por autenticação.
 - PostgreSQL configurado por `DATABASE_URL`.
 - Healthcheck informa se o banco está conectado.
@@ -139,11 +139,11 @@ A passagem entre etapas respeita os requisitos de prontidão. Ações pendentes 
 - `npm test`: smoke/integridade de código e servidor;
 - `npm run test:ui`: auditoria estrutural de 52 telas/estados, incluindo as dez etapas do fluxo;
 - `npm run test:docs`: auditoria específica de relatório, proposta, assinaturas e crédito da plataforma;
-- `npm run test:all`: executa as três suítes.
+- `npm run test:all`: executa todas as suítes estruturais, de interface, documentos, comercial, privacidade, retornos comerciais e integração Omie.
 
 ## Notas para produção
 
-A V20.2.7 mantém o estado operacional central em PostgreSQL e passa a armazenar fotos/anexos em uma tabela binária separada (`ar7_media`), deixando no estado apenas referências. Em produção hospedada, o navegador não mantém uma cópia persistente do banco operacional.
+A V20.2.8 mantém o estado operacional central em PostgreSQL e passa a armazenar fotos/anexos em uma tabela binária separada (`ar7_media`), deixando no estado apenas referências. Em produção hospedada, o navegador não mantém uma cópia persistente do banco operacional.
 
 Para evolução em escala, ainda vale planejar **contas e permissões individuais por usuário** e, quando o volume de mídia crescer, avaliar object storage dedicado. Para o piloto atual, a mídia centralizada no PostgreSQL reduz a exposição em dispositivos e simplifica a implantação.
 
@@ -217,7 +217,7 @@ Além da auditoria geral, a versão inclui:
 - A limpeza troca o `data_epoch` do banco. Clientes antigos ou abas ainda abertas não conseguem restaurar os dados apagados.
 - Versões anteriores à 20.2.6 são recusadas para novas gravações no estado central.
 - Mídias sem referência são removidas automaticamente quando o estado é salvo.
-- O script `LIMPAR-PRODUCAO-APOS-DEPLOY.ps1` executa a limpeza somente depois de confirmar que a V20.2.7 está online e conectada ao PostgreSQL.
+- O script `LIMPAR-PRODUCAO-APOS-DEPLOY.ps1` executa a limpeza somente depois de confirmar que a V20.2.8 está online e conectada ao PostgreSQL.
 
 
 ## V20.2.7 — retornos comerciais no Dashboard
@@ -226,3 +226,41 @@ Além da auditoria geral, a versão inclui:
 - Pedidos de revisão/ajuste feitos pelo cliente agora aparecem também no Dashboard, em alerta âmbar.
 - Cada pedido mostra OS, empresa/equipamento, proposta anterior, motivo, data/hora e atalho direto para revisar o orçamento.
 - O alerta de revisão só desaparece depois que uma proposta posterior ao pedido é efetivamente reenviada.
+
+
+## V20.2.8 — Integração Omie Fase 1
+
+A AR7 continua sendo o sistema mestre da operação técnica da oficina. O Omie entra como ERP administrativo, fiscal e financeiro, sem duplicar no AR7 funções contábeis/fiscais que pertencem ao ERP.
+
+### O que foi implementado
+- tela **Configurações → Integrações → Omie**, com status, empresa vinculada, última sincronização, erros, contadores e controles de operação;
+- credenciais somente no servidor por `OMIE_APP_KEY` e `OMIE_APP_SECRET`;
+- camada modular em `services/omie/`, separando cliente HTTP, clientes, serviços, OS, faturamento, webhooks, mappings, logs e coordenação;
+- mappings AR7 ↔ Omie sem substituir IDs internos;
+- sincronização de clientes com prevenção de duplicidade por mapping, código de integração e CPF/CNPJ;
+- mapeamento de serviço existente e criação opcional somente com configuração fiscal completa;
+- proposta **Aprovada** pode gerar/atualizar a OS correspondente no Omie; proposta **Negada** ou com **Revisão solicitada** nunca é tratada como aprovada;
+- criação/alteração idempotente da OS usando código de integração estável;
+- card **Integração Omie** dentro da OS AR7;
+- consulta de status básico de faturamento/NFS-e via status da OS;
+- webhook seguro, idempotente e isolado por organização, sem assumir nomes de eventos não documentados;
+- quando um webhook traz ID/código de uma OS já vinculada, o AR7 pode atualizar o status de faturamento em segundo plano;
+- falhas do Omie são registradas e não impedem o fluxo técnico do AR7;
+- migration aditiva em `migrations/20260810_omie_phase1_v208.sql`;
+- integração inicia desligada e em modo manual por segurança.
+
+### Variáveis Omie
+Configure somente no servidor/Render:
+- `OMIE_APP_KEY`
+- `OMIE_APP_SECRET`
+- `OMIE_INTEGRATION_ENABLED`
+- `OMIE_SYNC_MODE`
+- `OMIE_TIMEOUT_MS`
+- `OMIE_WEBHOOK_TOKEN`
+- `AR7_ORGANIZATION_ID`
+- `AR7_PUBLIC_URL`
+
+Nenhum segredo real está incluído neste pacote.
+
+### Documentação da entrega
+Consulte `INTEGRACAO-OMIE-V20.2.8.md` para configuração, testes, webhook, fluxo de aprovação, deploy e pendências da Fase 2.

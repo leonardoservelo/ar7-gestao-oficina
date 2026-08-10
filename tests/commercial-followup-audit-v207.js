@@ -23,7 +23,7 @@ vm.runInThisContext(src,{filename:'app.js'});
 
 let passed=0,total=0;
 function check(name,ok){total++;console.log(`${ok?'PASS':'FAIL'} - ${name}`);if(ok)passed++;else process.exitCode=1;}
-check('release V20.2.7 consistente',pkg.version==='20.2.7'&&app.includes("const APP_RELEASE = '20.2.7'"));
+check('release V20.2.8 consistente',pkg.version==='20.2.8'&&app.includes("const APP_RELEASE = '20.2.8'"));
 check('fila de revisao usa feedback mais recente',app.includes('function adjustmentProposalQueueV207()')&&app.includes("item.feedback?.type!=='adjustment'"));
 check('pedido permanece ate reenvio posterior',app.includes('sentAt<=requestedAt')&&app.includes('!sentAt'));
 check('dashboard possui alerta especifico de revisao',app.includes('REVISÃO SOLICITADA')&&app.includes('pedido de revisão')&&css.includes('.adjustment-proposal-alert-v207'));
@@ -54,5 +54,5 @@ db.orders[0].budget.sentAt='';
 db.orders[0].clientBudgetFeedbackV17.push({id:'fb2',type:'rejected',reason:'Depois foi negada',at:'2026-08-10T14:00:00.000Z',by:'Compras',proposalCode:'PROP-207-R02',revision:2});
 check('somente o feedback mais recente define a pendencia',__ar7V207.queue().length===0);
 Object.assign(db,old);
-console.log(`\n${passed}/${total} verificações V20.2.7 de retornos comerciais aprovadas.`);
+console.log(`\n${passed}/${total} verificações V20.2.8 de retornos comerciais aprovadas.`);
 if(passed!==total)process.exit(1);

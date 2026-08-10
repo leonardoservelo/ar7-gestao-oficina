@@ -1,8 +1,8 @@
 {
   "name": "ar7-gestao-oficina",
-  "version": "20.2.7",
+  "version": "20.2.8",
   "private": true,
-  "description": "AR7 Gestão da Oficina V20.2.7 — dados centrais e privacidade, com pedidos de revisão do cliente destacados no Dashboard.",
+  "description": "AR7 Gestão da Oficina V20.2.8 — dados centrais, retornos comerciais e integração oficial Omie Fase 1.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,12 +10,13 @@
     "check": "node --check app.js && node --check server.js",
     "test": "node tests/smoke-v20.js",
     "test:ui": "node tests/ui-audit-v20.js",
-    "test:all": "npm test && npm run test:ui && npm run test:docs && npm run test:commercial && npm run test:hotfix && npm run test:privacy && npm run test:followup",
+    "test:all": "npm test && npm run test:ui && npm run test:docs && npm run test:commercial && npm run test:hotfix && npm run test:privacy && npm run test:followup && npm run test:omie",
     "test:docs": "node tests/document-audit-v203.js",
     "test:commercial": "node tests/commercial-audit-v204.js",
     "test:hotfix": "node tests/hotfix-audit-v205.js",
     "test:privacy": "node tests/privacy-storage-audit-v206.js",
-    "test:followup": "node tests/commercial-followup-audit-v207.js"
+    "test:followup": "node tests/commercial-followup-audit-v207.js",
+    "test:omie": "node tests/omie-integration-audit-v208.js"
   },
   "engines": {
     "node": ">=18"
